@@ -36,7 +36,7 @@ function closeSearchView() {
     window.parent.postMessage({ type: "cinenest-close-search-overlay" }, "*");
     return;
   }
-  location.href = "index.html";
+  location.href = "../index.html";
 }
 
 function navigate(url) {
@@ -62,7 +62,7 @@ function updateUrl() {
   if (state.query.trim()) search.set("q", state.query.trim());
   if (state.filter !== "multi") search.set("filter", state.filter);
   if (state.page > 1) search.set("page", String(state.page));
-  history.replaceState({}, "", `search.html${search.toString() ? `?${search.toString()}` : ""}`);
+  history.replaceState({}, "", `${search.toString() ? `?${search.toString()}` : ""}`);
 }
 
 function updateQueryUI() {

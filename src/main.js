@@ -215,7 +215,7 @@ function wireAuth() {
 
 function openSearchPage(rawQuery = "") {
   const query = String(rawQuery || "").trim();
-  const url = query ? `search.html?q=${encodeURIComponent(query)}` : "search.html";
+  const url = query ? `pages/search.html?q=${encodeURIComponent(query)}` : "pages/search.html";
 
   if (!elements.searchPageOverlay || !elements.searchPageFrame) {
     location.href = url;
@@ -351,7 +351,7 @@ function createCard(item, type = "movie", source = "tmdb") {
   `;
 
   card.querySelector('[data-action="play"]').addEventListener("click", () => {
-    location.href = `watch.html?id=${item.id}&type=${type}&source=${source}`;
+    location.href = `pages/watch.html?id=${item.id}&type=${type}&source=${source}`;
   });
 
   card.querySelector('[data-action="info"]').addEventListener("click", () => {
@@ -372,7 +372,7 @@ async function loadHero() {
     elements.heroTitle.textContent = formatTitle(chosen);
     elements.heroOverview.textContent = chosen.overview || "No overview available.";
 
-    elements.heroPlay.onclick = () => (location.href = `watch.html?id=${chosen.id}&type=movie&source=local`);
+    elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${chosen.id}&type=movie&source=local`);
     elements.heroInfo.onclick = () => openDetail(chosen.id, "movie", "local");
     return;
   }
@@ -394,7 +394,7 @@ async function loadHero() {
   elements.heroTitle.textContent = formatTitle(chosen);
   elements.heroOverview.textContent = chosen.overview || "No overview available.";
 
-  elements.heroPlay.onclick = () => (location.href = `watch.html?id=${chosen.id}&type=movie`);
+  elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${chosen.id}&type=movie`);
   elements.heroInfo.onclick = () => openDetail(chosen.id, "movie");
 }
 
@@ -461,7 +461,7 @@ async function openDetail(id, type = "movie", source = "tmdb") {
   elements.detailModal.classList.remove("hidden");
 
   elements.watchBtn.onclick = () => {
-    location.href = `watch.html?id=${id}&type=${type}&source=${source}`;
+    location.href = `pages/watch.html?id=${id}&type=${type}&source=${source}`;
   };
 
   const syncListBtn = () => {

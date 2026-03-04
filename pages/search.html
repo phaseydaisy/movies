@@ -20,14 +20,14 @@
   </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236d8bff'/%3E%3Cstop offset='100%25' stop-color='%23ff3d5e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23090a0f'/%3E%3Cpath d='M16 44V20h6l8 12 8-12h6v24h-6V30l-8 12-8-12v14z' fill='url(%23g)'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../styles.css" />
 </head>
 <body class="bg-netflix-black text-white min-h-screen app-theme">
   <header class="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur border-b border-white/10">
     <div class="app-shell px-4 lg:px-8 py-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-400 to-rose-500 grid place-items-center font-black text-black">C</div>
-        <h1 class="text-netflix-red text-2xl font-bold cursor-pointer brand-mark" onclick="location.href='index.html'">CineNest</h1>
+        <h1 class="text-netflix-red text-2xl font-bold cursor-pointer brand-mark" onclick="location.href='../index.html'">CineNest</h1>
       </div>
       <button id="backHome" class="utility-pill"><i class="fa-solid fa-arrow-left"></i> Back Home</button>
     </div>
@@ -45,7 +45,7 @@
             <h2 class="text-2xl font-bold">Search Results</h2>
             <p id="searchQueryDisplay" class="text-sm text-gray-300 mt-1">Query: trending</p>
           </div>
-          <a href="index.html" class="h-10 w-10 rounded-full bg-zinc-800 grid place-items-center"><i class="fa-solid fa-xmark"></i></a>
+          <a href="../index.html" class="h-10 w-10 rounded-full bg-zinc-800 grid place-items-center"><i class="fa-solid fa-xmark"></i></a>
         </div>
 
         <div class="flex flex-col md:flex-row md:items-center gap-3">
@@ -78,6 +78,6 @@
 
   <div id="toast" class="hidden fixed bottom-4 right-4 bg-zinc-800 border border-zinc-600 px-4 py-3 rounded-lg text-sm"></div>
 
-  <script type="module" src="src/search.js"></script>
+  <script type="module" src="../src/search.js"></script>
 </body>
 </html>
