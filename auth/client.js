@@ -1,9 +1,13 @@
-import { AUTH_API_BASE_URL } from "./config.js";
+import { AUTH_API_BASE_URL } from "../src/config.js";
 
 const AUTH_SESSION_KEY = "cinenest:session";
 
 function setSession(session) {
   localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+}
+
+function clearSession() {
+  localStorage.removeItem(AUTH_SESSION_KEY);
 }
 
 function goVerify(email) {
@@ -31,21 +35,6 @@ async function callAuthApi(path, payload) {
     return { ...data, ok: false };
   }
   return data;
-}
-
-function maybeShowDemoCode(data) {
-  const demoCode = document.getElementById("demoCode");
-  if (!demoCode) return;
-
-  const code = data?.demoCode;
-  if (!code) {
-    demoCode.classList.add("hidden");
-    demoCode.textContent = "";
-    return;
-  }
-
-  demoCode.classList.remove("hidden");
-  demoCode.textContent = `Demo code: ${code}`;
 }
 
 function showMessage(text, isError = true) {
@@ -78,7 +67,9 @@ function wireSignIn() {
     const data = await callAuthApi("/auth/signin", { email, password }).catch((error) => ({ ok: false, message: error.message }));
 
     if (!data.ok) {
-      maybeShowDemoCode(data);
+      if (data.needsVerification) {
+        clearSession();
+      }
       showMessage(data.message || "Could not sign in.");
       if (data.needsVerification) {
         setTimeout(() => goVerify(email), 700);
@@ -86,7 +77,6 @@ function wireSignIn() {
       return;
     }
 
-    maybeShowDemoCode(null);
     setSession(data.session || { email });
     showMessage("Signed in. Redirecting...", false);
     setTimeout(goHome, 500);
@@ -98,34 +88,9 @@ function wireSignIn() {
 function wireSignUp() {
   const form = document.getElementById("signupForm");
   if (!form) return false;
-  const nameInput = document.getElementById("name");
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("password");
   const submitButton = document.getElementById("signupSubmit");
 
   let signupInFlight = false;
-  let autoSubmitTimer = null;
-
-  const canAutoSubmit = () => {
-    const name = String(nameInput?.value || "").trim();
-    const email = String(emailInput?.value || "").trim();
-    const password = String(passwordInput?.value || "");
-    return !!name && !!email && password.length >= 6;
-  };
-
-  const scheduleAutoSubmit = () => {
-    clearTimeout(autoSubmitTimer);
-    if (signupInFlight || !canAutoSubmit()) return;
-    autoSubmitTimer = setTimeout(() => {
-      if (!signupInFlight && canAutoSubmit()) {
-        form.requestSubmit();
-      }
-    }, 450);
-  };
-
-  [nameInput, emailInput, passwordInput].forEach((input) => {
-    input?.addEventListener("input", scheduleAutoSubmit);
-  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -153,14 +118,13 @@ function wireSignUp() {
 
     const data = await callAuthApi("/auth/signup", { name, email, password }).catch((error) => ({ ok: false, message: error.message }));
     if (!data.ok) {
-      maybeShowDemoCode(data);
       showMessage(data.message || "Could not create account.");
       signupInFlight = false;
       if (submitButton) submitButton.disabled = false;
       return;
     }
 
-    maybeShowDemoCode(data);
+    clearSession();
     showMessage(data.message || "Account created. Verification required.", false);
     setTimeout(() => goVerify(email), 700);
   });
@@ -175,20 +139,72 @@ function wireVerify() {
   const params = new URLSearchParams(location.search);
   const emailInput = document.getElementById("email");
   const codeInput = document.getElementById("verificationCode");
-  const resendBtn = document.getElementById("resendCode");
-  const demoCode = document.getElementById("demoCode");
+  const resendBtn = document.getElementById("sendCode") || document.getElementById("resendCode");
   const emailFromQuery = String(params.get("email") || "").trim().toLowerCase();
+  let resendCountdown = null;
 
   if (emailFromQuery) emailInput.value = emailFromQuery;
 
-  resendBtn.addEventListener("click", async (event) => {
-    event.preventDefault();
-    const email = String(emailInput.value || "").trim().toLowerCase();
+  const resetResendButton = () => {
+    if (!resendBtn) return;
+    resendBtn.disabled = false;
+    resendBtn.textContent = "Send code";
+  };
 
-    const data = await callAuthApi("/auth/resend", { email }).catch((error) => ({ ok: false, message: error.message }));
-    maybeShowDemoCode(data);
-    showMessage(data.message || (data.ok ? "Verification code resent." : "Could not resend code."), !data.ok);
-  });
+  const startResendCooldown = (seconds) => {
+    if (!resendBtn) return;
+    const total = Number(seconds);
+    if (!Number.isFinite(total) || total <= 0) {
+      resetResendButton();
+      return;
+    }
+
+    if (resendCountdown) {
+      clearInterval(resendCountdown);
+      resendCountdown = null;
+    }
+
+    let remaining = Math.max(1, Math.ceil(total));
+    resendBtn.disabled = true;
+    resendBtn.textContent = `Send code (${remaining}s)`;
+
+    resendCountdown = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(resendCountdown);
+        resendCountdown = null;
+        resetResendButton();
+        return;
+      }
+      resendBtn.textContent = `Send code (${remaining}s)`;
+    }, 1000);
+  };
+
+  if (resendBtn) {
+    resendBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (resendBtn.disabled) return;
+
+      const email = String(emailInput.value || "").trim().toLowerCase();
+      if (!email) {
+        showMessage("Email is required.");
+        return;
+      }
+
+      resendBtn.disabled = true;
+      resendBtn.textContent = "Sending...";
+
+      const data = await callAuthApi("/auth/resend", { email }).catch((error) => ({ ok: false, message: error.message }));
+      showMessage(data.message || (data.ok ? "Verification code sent." : "Could not send code."), !data.ok);
+
+      const retryAfterSeconds = Number(data?.retryAfterSeconds || 0);
+      if (retryAfterSeconds > 0) {
+        startResendCooldown(retryAfterSeconds);
+      } else {
+        resetResendButton();
+      }
+    });
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -204,19 +220,15 @@ function wireVerify() {
     const data = await callAuthApi("/auth/verify", { email, code }).catch((error) => ({ ok: false, message: error.message }));
 
     if (!data.ok) {
-      maybeShowDemoCode(data);
       showMessage(data.message || "Could not verify code.");
       return;
     }
 
-    maybeShowDemoCode(null);
     setSession(data.session || { email });
     showMessage(data.message || "Email verified. Redirecting...", false);
     setTimeout(goHome, 500);
   });
 
-  emailInput.addEventListener("input", () => maybeShowDemoCode(null));
-  if (demoCode) demoCode.classList.add("hidden");
   return true;
 }
 

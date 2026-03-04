@@ -11,7 +11,7 @@
     <section class="auth-card">
       <h1 class="auth-title">Verify your email</h1>
       <p class="auth-subtitle">Enter the 6-digit code sent to your email.</p>
-      <p id="verificationHint" class="auth-help">Check your email for the verification code. If email is not configured yet, a demo code may appear below.</p>
+      <p id="verificationHint" class="auth-help">Check your email for the verification code.</p>
 
       <form id="verifyForm" class="auth-form" autocomplete="on">
         <label class="auth-field">Email
@@ -22,13 +22,11 @@
         </label>
 
         <p id="authMessage" class="hidden auth-message"></p>
-        <p id="demoCode" class="hidden text-xs text-amber-300"></p>
-
         <button type="submit" class="auth-submit">Verify email</button>
       </form>
 
       <div class="auth-links auth-links-inline">
-        <button id="resendCode" class="auth-secondary" type="button">Resend code</button>
+        <button id="sendCode" class="auth-secondary" type="button">Send code</button>
         <a href="../signin/">Back to sign in</a>
       </div>
     </section>
