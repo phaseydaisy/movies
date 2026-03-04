@@ -96,6 +96,49 @@ main,
   color: #ffffff !important;
 }
 
+.auth-btn {
+  border: 1px solid var(--line);
+  background: rgba(26, 31, 46, 0.85);
+  color: #e8edff;
+  border-radius: 11px;
+  padding: 0.5rem 0.78rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.account-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  background: rgba(20, 25, 38, 0.92);
+  border-radius: 11px;
+  padding: 0.38rem 0.46rem 0.38rem 0.62rem;
+  font-size: 0.78rem;
+  color: #e8edff;
+  white-space: nowrap;
+}
+
+.account-signout {
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: rgba(36, 42, 60, 0.92);
+  padding: 0.32rem 0.52rem;
+  color: #f8fbff;
+  font-size: 0.73rem;
+}
+
+#authModal input,
+#authModal button {
+  transition: all 0.2s ease;
+}
+
+#authModal input:focus {
+  outline: none;
+  border-color: rgba(109, 139, 255, 0.8);
+  box-shadow: 0 0 0 3px rgba(109, 139, 255, 0.2);
+}
+
 #heroBackdrop {
   filter: saturate(1.05) contrast(1.1) brightness(0.72);
   transform: scale(1.02);

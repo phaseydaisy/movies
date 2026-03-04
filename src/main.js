@@ -10,7 +10,12 @@ const state = {
   searchQuery: "",
   searchPage: 1,
   mode: TMDB_API_KEY && !TMDB_API_KEY.includes("PASTE_YOUR") ? "tmdb" : "local",
+  authMode: "signin",
+  session: null,
 };
+
+const AUTH_USERS_KEY = "cinenest:users";
+const AUTH_SESSION_KEY = "cinenest:session";
 
 const elements = {
   heroBackdrop: document.getElementById("heroBackdrop"),
@@ -26,6 +31,22 @@ const elements = {
   searchPageOverlay: document.getElementById("searchPageOverlay"),
   searchPageFrame: document.getElementById("searchPageFrame"),
   closeSearchPageOverlay: document.getElementById("closeSearchPageOverlay"),
+  signUpBtn: document.getElementById("signUpBtn"),
+  signInBtn: document.getElementById("signInBtn"),
+  accountPill: document.getElementById("accountPill"),
+  accountName: document.getElementById("accountName"),
+  signOutBtn: document.getElementById("signOutBtn"),
+  authModal: document.getElementById("authModal"),
+  closeAuth: document.getElementById("closeAuth"),
+  authTitle: document.getElementById("authTitle"),
+  authForm: document.getElementById("authForm"),
+  authNameWrap: document.getElementById("authNameWrap"),
+  authName: document.getElementById("authName"),
+  authEmail: document.getElementById("authEmail"),
+  authPassword: document.getElementById("authPassword"),
+  authSubmit: document.getElementById("authSubmit"),
+  authSwitch: document.getElementById("authSwitch"),
+  authSwitchText: document.getElementById("authSwitchText"),
   detailModal: document.getElementById("detailModal"),
   closeDetail: document.getElementById("closeDetail"),
   detailBackdrop: document.getElementById("detailBackdrop"),
@@ -49,6 +70,148 @@ const elements = {
 };
 
 let searchDebounceTimer = null;
+
+function getAuthUsers() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setAuthUsers(users) {
+  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+}
+
+function getAuthSession() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function setAuthSession(session) {
+  if (!session) {
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    return;
+  }
+  localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+}
+
+function syncAuthUi() {
+  state.session = getAuthSession();
+  const signedIn = !!state.session;
+
+  if (elements.signUpBtn) elements.signUpBtn.classList.toggle("hidden", signedIn);
+  if (elements.signInBtn) elements.signInBtn.classList.toggle("hidden", signedIn);
+  if (elements.accountPill) elements.accountPill.classList.toggle("hidden", !signedIn);
+  if (signedIn && elements.accountName) {
+    elements.accountName.textContent = state.session.name || state.session.email || "Account";
+  }
+}
+
+function syncAuthModalUi() {
+  const signUp = state.authMode === "signup";
+  elements.authTitle.textContent = signUp ? "Create account" : "Sign in";
+  elements.authSubmit.textContent = signUp ? "Create account" : "Sign in";
+  elements.authSwitchText.textContent = signUp ? "Already have an account?" : "New here?";
+  elements.authSwitch.textContent = signUp ? "Sign in" : "Create account";
+  elements.authNameWrap.classList.toggle("hidden", !signUp);
+  elements.authPassword.autocomplete = signUp ? "new-password" : "current-password";
+}
+
+function openAuthModal(mode = "signin") {
+  state.authMode = mode;
+  syncAuthModalUi();
+  elements.authForm.reset();
+  elements.authModal.classList.remove("hidden");
+  setTimeout(() => {
+    if (state.authMode === "signup") {
+      elements.authName.focus();
+    } else {
+      elements.authEmail.focus();
+    }
+  }, 0);
+}
+
+function closeAuthModal() {
+  elements.authModal.classList.add("hidden");
+}
+
+function wireAuth() {
+  syncAuthUi();
+
+  elements.signUpBtn.addEventListener("click", () => openAuthModal("signup"));
+  elements.signInBtn.addEventListener("click", () => openAuthModal("signin"));
+
+  elements.closeAuth.addEventListener("click", closeAuthModal);
+  elements.authModal.addEventListener("click", (event) => {
+    if (event.target === elements.authModal) {
+      closeAuthModal();
+    }
+  });
+
+  elements.authSwitch.addEventListener("click", (event) => {
+    event.preventDefault();
+    state.authMode = state.authMode === "signup" ? "signin" : "signup";
+    syncAuthModalUi();
+  });
+
+  elements.authForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = elements.authName.value.trim();
+    const email = elements.authEmail.value.trim().toLowerCase();
+    const password = elements.authPassword.value;
+
+    if (!email || !password) {
+      toast("Email and password are required");
+      return;
+    }
+
+    const users = getAuthUsers();
+    const existing = users.find((user) => user.email === email);
+
+    if (state.authMode === "signup") {
+      if (!name) {
+        toast("Display name is required");
+        return;
+      }
+      if (password.length < 6) {
+        toast("Password must be at least 6 characters");
+        return;
+      }
+      if (existing) {
+        toast("Account already exists. Please sign in.");
+        return;
+      }
+
+      users.push({ name, email, password });
+      setAuthUsers(users);
+      setAuthSession({ name, email });
+      syncAuthUi();
+      closeAuthModal();
+      toast(`Welcome, ${name}`);
+      return;
+    }
+
+    if (!existing || existing.password !== password) {
+      toast("Invalid email or password");
+      return;
+    }
+
+    setAuthSession({ name: existing.name, email: existing.email });
+    syncAuthUi();
+    closeAuthModal();
+    toast(`Welcome back, ${existing.name}`);
+  });
+
+  elements.signOutBtn.addEventListener("click", () => {
+    setAuthSession(null);
+    syncAuthUi();
+    toast("Signed out");
+  });
+}
 
 function openSearchPage(rawQuery = "") {
   const query = String(rawQuery || "").trim();
@@ -353,6 +516,10 @@ function wireSearch() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      if (elements.authModal && !elements.authModal.classList.contains("hidden")) {
+        closeAuthModal();
+        return;
+      }
       if (elements.searchPageOverlay && !elements.searchPageOverlay.classList.contains("hidden")) {
         closeSearchPage();
         return;
@@ -480,6 +647,7 @@ async function init() {
   try {
     wireSearch();
     wireSearchOverlay();
+    wireAuth();
     wireNav();
     wireQolControls();
     wireDetailClose();

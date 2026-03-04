@@ -37,11 +37,19 @@
         <a href="#" id="navList" class="hover:text-white">Watchlist</a>
       </nav>
 
-      <div class="relative w-full max-w-xl">
-        <input id="searchInput" class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-sm" placeholder="Search by title, year, genre vibe..." />
-        <button id="searchBtn" class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded hover:bg-zinc-800 text-gray-400" aria-label="Search">
-          <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+      <div class="w-full max-w-2xl flex items-center gap-2">
+        <div class="relative flex-1 min-w-0">
+          <input id="searchInput" class="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-2 text-sm" placeholder="Search by title, year, genre vibe..." />
+          <button id="searchBtn" class="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded hover:bg-zinc-800 text-gray-400" aria-label="Search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+        <button id="signUpBtn" class="auth-btn">Sign up</button>
+        <button id="signInBtn" class="auth-btn">Sign in</button>
+        <div id="accountPill" class="hidden account-pill">
+          <span id="accountName" class="truncate max-w-[100px]"></span>
+          <button id="signOutBtn" class="account-signout">Sign out</button>
+        </div>
       </div>
     </div>
   </header>
@@ -161,6 +169,31 @@
         <button id="closeMyList" class="h-10 w-10 rounded-full bg-zinc-800"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="myListResults" class="flex-1 overflow-auto p-4 grid content-start items-start grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+    </div>
+  </div>
+
+  <div id="authModal" class="hidden fixed inset-0 z-[75] bg-black/80 p-4 lg:p-10">
+    <div class="max-w-md mx-auto bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-zinc-700 flex items-center justify-between gap-3">
+        <h4 id="authTitle" class="text-xl font-bold">Sign in</h4>
+        <button id="closeAuth" class="h-9 w-9 rounded-full bg-zinc-800"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="authForm" class="p-4 space-y-3">
+        <label id="authNameWrap" class="text-xs text-gray-400 hidden">Display name
+          <input id="authName" class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm" autocomplete="name" />
+        </label>
+        <label class="text-xs text-gray-400">Email
+          <input id="authEmail" type="email" class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm" autocomplete="email" required />
+        </label>
+        <label class="text-xs text-gray-400">Password
+          <input id="authPassword" type="password" class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm" autocomplete="current-password" required />
+        </label>
+        <button id="authSubmit" type="submit" class="w-full bg-netflix-red px-4 py-2 rounded font-semibold">Continue</button>
+      </form>
+      <div class="p-4 border-t border-zinc-700 text-sm text-gray-300 flex items-center justify-between gap-2">
+        <span id="authSwitchText">New here?</span>
+        <button id="authSwitch" class="text-white underline">Create account</button>
+      </div>
     </div>
   </div>
 
