@@ -139,6 +139,116 @@ main,
   box-shadow: 0 0 0 3px rgba(109, 139, 255, 0.2);
 }
 
+.auth-page-wrap {
+  padding: 2.2rem 1rem;
+}
+
+.auth-card {
+  inline-size: min(560px, 100%);
+  margin-inline: auto;
+  border-radius: 18px;
+  border: 1px solid var(--line-soft-2);
+  background: linear-gradient(180deg, rgba(19, 23, 35, 0.95), rgba(11, 14, 22, 0.94));
+  box-shadow: 0 26px 46px rgba(3, 6, 15, 0.58);
+  padding: 1.25rem;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.auth-subtitle {
+  margin: 0.5rem 0 1rem;
+  color: #c6cde3;
+}
+
+.auth-help {
+  margin: -0.25rem 0 0.95rem;
+  color: #9eaccd;
+  font-size: 0.8rem;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.auth-field {
+  display: grid;
+  gap: 0.36rem;
+  font-size: 0.78rem;
+  color: #b7c0da;
+}
+
+.auth-input {
+  inline-size: 100%;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(19, 23, 35, 0.95);
+  color: #f4f6ff;
+  padding: 0.62rem 0.78rem;
+  font-size: 0.92rem;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: rgba(109, 139, 255, 0.82);
+  box-shadow: 0 0 0 3px rgba(109, 139, 255, 0.2);
+}
+
+.auth-input-code {
+  letter-spacing: 0.24em;
+}
+
+.auth-message {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.auth-submit {
+  border: 1px solid rgba(255, 95, 127, 0.55);
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ff4f6e 0%, #d91d49 100%);
+  color: #fff;
+  padding: 0.64rem 0.8rem;
+  font-weight: 700;
+}
+
+.auth-secondary {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(26, 31, 46, 0.88);
+  color: #edf2ff;
+  padding: 0.46rem 0.72rem;
+  font-size: 0.82rem;
+}
+
+.auth-links {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  color: #b9c3df;
+}
+
+.auth-links p {
+  margin: 0;
+}
+
+.auth-links a {
+  color: #f1f5ff;
+  text-decoration: underline;
+}
+
+.auth-links-inline {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.9rem;
+}
+
 #heroBackdrop {
   filter: saturate(1.05) contrast(1.1) brightness(0.72);
   transform: scale(1.02);

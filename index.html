@@ -172,31 +172,6 @@
     </div>
   </div>
 
-  <div id="authModal" class="hidden fixed inset-0 z-[75] bg-black/80 p-4 lg:p-10">
-    <div class="max-w-md mx-auto bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
-      <div class="p-4 border-b border-zinc-700 flex items-center justify-between gap-3">
-        <h4 id="authTitle" class="text-xl font-bold">Sign in</h4>
-        <button id="closeAuth" class="h-9 w-9 rounded-full bg-zinc-800"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form id="authForm" class="p-4 space-y-3">
-        <label id="authNameWrap" class="text-xs text-gray-400 hidden">Display name
-          <input id="authName" class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm" autocomplete="name" />
-        </label>
-        <label class="text-xs text-gray-400">Email
-          <input id="authEmail" type="email" class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm" autocomplete="email" required />
-        </label>
-        <label class="text-xs text-gray-400">Password
-          <input id="authPassword" type="password" class="mt-1 w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm" autocomplete="current-password" required />
-        </label>
-        <button id="authSubmit" type="submit" class="w-full bg-netflix-red px-4 py-2 rounded font-semibold">Continue</button>
-      </form>
-      <div class="p-4 border-t border-zinc-700 text-sm text-gray-300 flex items-center justify-between gap-2">
-        <span id="authSwitchText">New here?</span>
-        <button id="authSwitch" class="text-white underline">Create account</button>
-      </div>
-    </div>
-  </div>
-
   <div id="toast" class="hidden fixed bottom-4 right-4 bg-zinc-800 border border-zinc-600 px-4 py-3 rounded-lg text-sm"></div>
 
   <script type="module" src="src/main.js"></script>

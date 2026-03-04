@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign up • CineNest</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body class="bg-netflix-black text-white min-h-screen app-theme">
+  <main class="app-shell auth-page-wrap">
+    <section class="auth-card">
+      <h1 class="auth-title">Create account</h1>
+      <p class="auth-subtitle">Join CineNest to keep your session and list personal. Verification is required.</p>
+
+      <form id="signupForm" class="auth-form" autocomplete="on">
+        <label class="auth-field">Display name
+          <input id="name" class="auth-input" autocomplete="name" required />
+        </label>
+        <label class="auth-field">Email
+          <input id="email" type="email" class="auth-input" autocomplete="email" required />
+        </label>
+        <label class="auth-field">Password
+          <input id="password" type="password" class="auth-input" autocomplete="new-password" required />
+        </label>
+
+        <p id="authMessage" class="hidden auth-message"></p>
+
+        <button id="signupSubmit" type="submit" class="auth-submit">Create account</button>
+      </form>
+
+      <div class="auth-links">
+        <p>Already have an account? <a href="../signin/">Sign in</a></p>
+        <p>Need to verify? <a href="../verify/">Open verification page</a></p>
+        <p><a href="../index.html">Back to home</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="../auth/client.js"></script>
+</body>
+</html>
