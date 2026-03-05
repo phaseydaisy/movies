@@ -155,9 +155,12 @@ main,
   background: linear-gradient(180deg, rgba(19, 23, 35, 0.97), rgba(11, 14, 22, 0.96));
   box-shadow: 0 16px 28px rgba(2, 5, 14, 0.52);
   padding: 0.34rem;
-  display: grid;
   gap: 0.3rem;
   z-index: 40;
+}
+
+.account-dropdown:not(.hidden) {
+  display: grid;
 }
 
 .account-dropdown-item {

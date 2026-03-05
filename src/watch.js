@@ -140,6 +140,22 @@ function getEstimatedProgressSeconds() {
   return playbackBaselineSec + Math.max(0, Math.floor((Date.now() - playbackStartedAtMs) / 1000));
 }
 
+function captureResumePoint() {
+  const current = Math.max(0, Math.floor(getEstimatedProgressSeconds()));
+  saveProgressSeconds(current);
+  pendingResumeSec = current;
+  return current;
+}
+
+function getResumeStartSeconds() {
+  if (pendingResumeSec !== null && pendingResumeSec !== undefined) {
+    return Math.max(0, Math.floor(Number(pendingResumeSec) || 0));
+  }
+  const estimated = Math.max(0, Math.floor(getEstimatedProgressSeconds()));
+  const saved = Math.max(0, Math.floor(getSavedProgressSeconds()));
+  return Math.max(saved, estimated);
+}
+
 function stopProgressTracking() {
   if (progressSaveTimer) {
     clearInterval(progressSaveTimer);
@@ -227,8 +243,7 @@ function addResumeParams(url, startSeconds = 0) {
 
 function renderPlayerFromUrl(url, startSeconds = 0) {
   const resumedUrl = addResumeParams(url, startSeconds);
-  const withBust = `${resumedUrl}${resumedUrl.includes("?") ? "&" : "?"}_cb=${Date.now()}`;
-  playerContent.innerHTML = `<iframe class="w-full h-full" src="${withBust}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>`;
+  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>`;
   startProgressTracking(startSeconds);
   pendingResumeSec = null;
   schedulePlayerOverlayReveal();
@@ -328,7 +343,7 @@ function playTrailerServer() {
     renderMessage("Trailer not available for this title.");
     return;
   }
-  const resumeAt = pendingResumeSec ?? getSavedProgressSeconds();
+  const resumeAt = getResumeStartSeconds();
   renderPlayerFromUrl(`https://www.youtube.com/embed/${currentTrailerKey}?autoplay=1&mute=1`, resumeAt);
 }
 
@@ -340,12 +355,12 @@ function playEmbedServer(server) {
   }
   const mediaType = type === "tv" ? "tv" : "movie";
   const baseUrl = server.buildUrl(embedId, mediaType, { season: currentSeason, episode: currentEpisode });
-  const resumeAt = pendingResumeSec ?? getSavedProgressSeconds();
+  const resumeAt = getResumeStartSeconds();
   renderPlayerFromUrl(addEpisodeParams(baseUrl), resumeAt);
 }
 
 function getDefaultEmbedServer() {
-  return SERVERS.find((entry) => entry.type === "embed") || null;
+  return SERVERS.find((entry) => entry.key === "licensed-2") || SERVERS.find((entry) => entry.type === "embed") || null;
 }
 
 function playActiveServer() {
@@ -384,7 +399,7 @@ function mountServerButtons() {
     button.textContent = server.label;
 
     button.addEventListener("click", () => {
-      pendingResumeSec = getEstimatedProgressSeconds();
+      captureResumePoint();
       activeServerKey = server.key;
       setActiveServerButton(server.key);
       if (server.type === "trailer") {

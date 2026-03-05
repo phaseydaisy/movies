@@ -37,11 +37,11 @@ function closeSearchView() {
     window.parent.postMessage({ type: "cinenest-close-search-overlay" }, "*");
     return;
   }
-  location.href = "../index.html";
+  location.href = "/";
 }
 
 function goHomeInsideEmbed() {
-  location.href = "../index.html";
+  location.href = "/";
 }
 
 function navigate(url) {

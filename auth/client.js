@@ -46,7 +46,7 @@ function showMessage(text, isError = true) {
 }
 
 function goHome() {
-  location.href = "../index.html";
+  location.href = "/";
 }
 
 function wireSignIn() {

@@ -1,6 +1,19 @@
 export const WATCH_SERVERS = [
   { key: "trailer", label: "Trailer", type: "trailer" },
   {
+    key: "licensed-2",
+    label: "videasy (recommended)",
+    type: "embed",
+    buildUrl: (contentId, mediaType, opts = {}) => {
+      if (mediaType === "tv") {
+        const season = Number(opts.season || 1);
+        const episode = Number(opts.episode || 1);
+        return `https://player.videasy.net/tv/${contentId}/${season}/${episode}`;
+      }
+      return `https://player.videasy.net/movie/${contentId}`;
+    },
+  },
+  {
     key: "autoembed",
     label: "Autoembed (Not working)",
     type: "embed",
@@ -24,19 +37,6 @@ export const WATCH_SERVERS = [
         return `https://primesrc.me/tv/${contentId}/${season}/${episode}`;
       }
       return `https://primesrc.me/movie/${contentId}`;
-    },
-  },
-  {
-    key: "licensed-2",
-    label: "videasy (working)",
-    type: "embed",
-    buildUrl: (contentId, mediaType, opts = {}) => {
-      if (mediaType === "tv") {
-        const season = Number(opts.season || 1);
-        const episode = Number(opts.episode || 1);
-        return `https://player.videasy.net/tv/${contentId}/${season}/${episode}`;
-      }
-      return `https://player.videasy.net/movie/${contentId}`;
     },
   },
 ];
