@@ -1,6 +1,7 @@
 import { getJson, poster, fetchTrailerKey } from "./api.js";
 import { getLocalItem } from "./catalog.js";
 import { WATCH_SERVERS } from "./providers.js";
+import { AUTH_API_BASE_URL } from "./config.js";
 
 const params = new URLSearchParams(location.search);
 const id = params.get("id");
@@ -38,6 +39,69 @@ let pendingResumeSec = null;
 
 const SERVERS = WATCH_SERVERS;
 const RESUME_STORAGE_KEY = "cinenest:playback-progress";
+const AUTH_SESSION_KEY = "cinenest:session";
+
+function getApiBase() {
+  return String(AUTH_API_BASE_URL || "").trim().replace(/\/$/, "");
+}
+
+function getAuthSession() {
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+async function callAuthApi(path, payload) {
+  const base = getApiBase();
+  if (!base || base.includes("<your-subdomain>")) {
+    throw new Error("Set AUTH_API_BASE_URL in src/config.js");
+  }
+
+  const response = await fetch(`${base}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+
+  const data = await response.json().catch(() => ({ ok: false }));
+  if (!response.ok) return { ...data, ok: false };
+  return data;
+}
+
+function getHistoryEntry() {
+  if (!currentItem) return null;
+  const base = {
+    id: String(id || "").trim(),
+    type,
+    source,
+    title: currentItem.title || currentItem.name || "Untitled",
+    poster_path: currentItem.poster_path || null,
+    vote_average: Number(currentItem.vote_average || 0) || 0,
+    release_date: currentItem.release_date || null,
+    first_air_date: currentItem.first_air_date || null,
+  };
+
+  if (type === "tv") {
+    base.season = currentSeason;
+    base.episode = currentEpisode;
+  }
+  return base;
+}
+
+function recordHistory() {
+  const session = getAuthSession();
+  const email = String(session?.email || "").trim().toLowerCase();
+  const entry = getHistoryEntry();
+
+  if (!email || !entry) return;
+
+  callAuthApi("/history/upsert", {
+    email,
+    entry,
+  }).catch(() => {});
+}
 
 function getProgressContextKey() {
   const sourceKey = source || "tmdb";
@@ -285,6 +349,8 @@ function getDefaultEmbedServer() {
 }
 
 function playActiveServer() {
+  recordHistory();
+
   if (activeServerKey === "trailer") {
     if (type === "tv") {
       const fallbackEmbed = getDefaultEmbedServer();

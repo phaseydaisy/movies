@@ -1,5 +1,5 @@
 import { getJson, poster, backdrop, fetchTrailerKey } from "./api.js";
-import { TMDB_API_KEY } from "./config.js";
+import { TMDB_API_KEY, AUTH_API_BASE_URL } from "./config.js";
 import { MOVIES, SHOWS, TEEN, ALL, getLocalItem } from "./catalog.js";
 
 const state = {
@@ -11,6 +11,7 @@ const state = {
   searchPage: 1,
   mode: TMDB_API_KEY && !TMDB_API_KEY.includes("PASTE_YOUR") ? "tmdb" : "local",
   session: null,
+  history: [],
 };
 
 const AUTH_SESSION_KEY = "cinenest:session";
@@ -74,6 +75,27 @@ function setAuthSession(session) {
   localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
 }
 
+function getApiBase() {
+  return String(AUTH_API_BASE_URL || "").trim().replace(/\/$/, "");
+}
+
+async function callAuthApi(path, payload) {
+  const base = getApiBase();
+  if (!base || base.includes("<your-subdomain>")) {
+    throw new Error("Set AUTH_API_BASE_URL in src/config.js");
+  }
+
+  const response = await fetch(`${base}${path}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+
+  const data = await response.json().catch(() => ({ ok: false, message: "Invalid server response" }));
+  if (!response.ok) return { ...data, ok: false };
+  return data;
+}
+
 function syncAuthUi() {
   state.session = getAuthSession();
   const signedIn = !!state.session;
@@ -99,6 +121,7 @@ function wireAuth() {
 
   elements.signOutBtn.addEventListener("click", () => {
     setAuthSession(null);
+    state.history = [];
     syncAuthUi();
     toast("Signed out");
   });
@@ -148,60 +171,44 @@ function findLocalByTmdbId(id, type) {
   return ALL.find((item) => String(item.tmdb_id) === String(id) && item.media_type === type) || null;
 }
 
-function getListKey(item, type, source) {
-  return `${source}:${type}:${item.id}`;
+function getSessionEmail() {
+  return String(state.session?.email || "").trim().toLowerCase();
 }
 
-function getMyList() {
-  try {
-    return JSON.parse(localStorage.getItem("myList") || "[]");
-  } catch {
+function formatHistoryTime(value) {
+  const date = new Date(Number(value || 0));
+  if (Number.isNaN(date.getTime())) return "Recently watched";
+  return `Watched ${date.toLocaleString()}`;
+}
+
+async function loadWatchHistory() {
+  const email = getSessionEmail();
+  if (!email) {
+    state.history = [];
     return [];
   }
-}
 
-function setMyList(items) {
-  localStorage.setItem("myList", JSON.stringify(items));
-}
-
-function isInMyList(item, type, source) {
-  const key = getListKey(item, type, source);
-  return getMyList().some((entry) => entry.key === key);
-}
-
-function toggleMyList(item, type, source) {
-  const key = getListKey(item, type, source);
-  const current = getMyList();
-  const exists = current.some((entry) => entry.key === key);
-
-  if (exists) {
-    setMyList(current.filter((entry) => entry.key !== key));
-    toast("Removed from My List");
-    return false;
+  const data = await callAuthApi("/history/list", { email }).catch((error) => ({ ok: false, message: error.message }));
+  if (!data.ok) {
+    state.history = [];
+    return [];
   }
 
-  current.push({
-    key,
-    id: item.id,
-    type,
-    source,
-    title: formatTitle(item),
-    poster_path: item.poster_path,
-    vote_average: item.vote_average,
-    release_date: item.release_date,
-    first_air_date: item.first_air_date,
-  });
-  setMyList(current);
-  toast("Added to My List");
-  return true;
+  state.history = Array.isArray(data.history) ? data.history : [];
+  return state.history;
 }
 
 function renderMyList() {
-  const list = getMyList();
+  const list = state.history;
   elements.myListResults.innerHTML = "";
 
+  if (!getSessionEmail()) {
+    elements.myListResults.innerHTML = '<p class="col-span-full text-gray-400">Sign in to see your watch history.</p>';
+    return;
+  }
+
   if (!list.length) {
-    elements.myListResults.innerHTML = '<p class="col-span-full text-gray-400">Your list is empty. Open any title and click + My List.</p>';
+    elements.myListResults.innerHTML = '<p class="col-span-full text-gray-400">No watch history yet. Start watching and titles will appear here.</p>';
     return;
   }
 
@@ -212,7 +219,7 @@ function renderMyList() {
       <img src="${poster(entry.poster_path)}" alt="${entry.title}" />
       <div class="text">
         <p class="font-semibold line-clamp-2">${entry.title}</p>
-        <p class="text-xs text-gray-400 mt-1">${entry.type.toUpperCase()}</p>
+        <p class="text-xs text-gray-400 mt-1">${entry.type.toUpperCase()} • ${formatHistoryTime(entry.watchedAt)}</p>
       </div>
     `;
     card.addEventListener("click", () => {
@@ -355,16 +362,11 @@ async function openDetail(id, type = "movie", source = "tmdb") {
     location.href = `pages/watch.html?id=${id}&type=${type}&source=${source}`;
   };
 
-  const syncListBtn = () => {
-    const inList = isInMyList(state.detail, type, source);
-    elements.addListBtn.textContent = inList ? "✓ In My List" : "+ My List";
-  };
-
-  syncListBtn();
-  elements.addListBtn.onclick = () => {
-    toggleMyList(state.detail, type, source);
-    syncListBtn();
-  };
+  elements.addListBtn.textContent = getSessionEmail()
+    ? "Saved to history when watched"
+    : "Sign in to save watch history";
+  elements.addListBtn.disabled = true;
+  elements.addListBtn.classList.add("opacity-70", "cursor-not-allowed");
 
   elements.trailerBtn.onclick = async () => {
     let key;
@@ -477,8 +479,11 @@ function wireNav() {
 
   elements.navList.addEventListener("click", (event) => {
     event.preventDefault();
-    renderMyList();
-    elements.myListModal.classList.remove("hidden");
+    loadWatchHistory()
+      .finally(() => {
+        renderMyList();
+        elements.myListModal.classList.remove("hidden");
+      });
   });
 
   elements.closeMyList.addEventListener("click", () => {

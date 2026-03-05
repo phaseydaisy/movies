@@ -34,7 +34,7 @@
         <a href="#" id="navHome" class="hover:text-white">Dashboard</a>
         <a href="#" id="navMovies" class="hover:text-white">Movies</a>
         <a href="#" id="navTv" class="hover:text-white">Series</a>
-        <a href="#" id="navList" class="hover:text-white">Watchlist</a>
+        <a href="#" id="navList" class="hover:text-white">History</a>
       </nav>
 
       <div class="w-full max-w-2xl flex items-center gap-2">
@@ -60,7 +60,7 @@
       <button data-qol-scroll="movies" class="utility-pill"><i class="fa-solid fa-film"></i>Jump to Movies</button>
       <button data-qol-scroll="tv" class="utility-pill"><i class="fa-solid fa-tv"></i>Jump to Series</button>
       <button data-qol-action="search" class="utility-pill"><i class="fa-solid fa-magnifying-glass"></i>Open Search</button>
-      <button data-qol-action="list" class="utility-pill"><i class="fa-solid fa-bookmark"></i>Open Watchlist</button>
+      <button data-qol-action="list" class="utility-pill"><i class="fa-solid fa-bookmark"></i>Open Watch History</button>
     </section>
 
     <section id="homeLanding" class="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -95,7 +95,7 @@
           <ul class="space-y-1">
             <li>• Press <strong>/</strong> for instant search</li>
             <li>• Use filter chips inside search overlay</li>
-            <li>• Save picks to Watchlist from details</li>
+            <li>• Watch any title to auto-save history</li>
           </ul>
         </div>
       </aside>
@@ -151,7 +151,7 @@
           <div class="flex gap-2">
             <button id="trailerBtn" class="bg-netflix-red px-4 py-2 rounded font-semibold"><i class="fa-solid fa-play mr-1"></i>Trailer</button>
             <button id="watchBtn" class="bg-white text-black px-4 py-2 rounded font-semibold">Watch</button>
-            <button id="addListBtn" class="bg-zinc-700 text-white px-4 py-2 rounded font-semibold">+ My List</button>
+            <button id="addListBtn" class="bg-zinc-700 text-white px-4 py-2 rounded font-semibold">Saved to history when watched</button>
           </div>
         </div>
       </div>
@@ -165,7 +165,7 @@
   <div id="myListModal" class="hidden fixed inset-0 z-[65] bg-black/70 p-4 lg:p-10">
     <div class="max-w-5xl mx-auto bg-zinc-900 border border-zinc-700 rounded-xl h-full overflow-hidden flex flex-col">
       <div class="p-4 border-b border-zinc-700 flex items-center justify-between gap-4">
-        <h4 class="text-2xl font-bold">My List</h4>
+        <h4 class="text-2xl font-bold">Watch History</h4>
         <button id="closeMyList" class="h-10 w-10 rounded-full bg-zinc-800"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="myListResults" class="flex-1 overflow-auto p-4 grid content-start items-start grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
