@@ -25,7 +25,7 @@
   </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%236d8bff'/%3E%3Cstop offset='100%25' stop-color='%23ff3d5e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='%23090a0f'/%3E%3Cpath d='M16 44V20h6l8 12 8-12h6v24h-6V30l-8 12-8-12v14z' fill='url(%23g)'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260305b" />
 </head>
 <body class="bg-netflix-black text-white min-h-screen app-theme">
   <header id="navbar" class="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur border-b border-white/10">
@@ -70,6 +70,8 @@
         <div id="heroBackdrop" class="absolute inset-0 bg-cover bg-center"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+        <button id="heroPrev" class="hero-edge-nav hero-edge-prev" aria-label="Previous highlight"><i class="fa-solid fa-chevron-left"></i></button>
+        <button id="heroNext" class="hero-edge-nav hero-edge-next" aria-label="Next highlight"><i class="fa-solid fa-chevron-right"></i></button>
         <div class="relative z-10 h-full flex items-end">
           <div class="px-6 lg:px-10 pb-10 max-w-2xl">
             <p class="hero-kicker">Editor’s Highlight</p>
@@ -78,8 +80,6 @@
             <div class="mt-6 flex flex-wrap gap-3">
               <button id="heroPlay" class="bg-white text-black px-6 py-3 rounded font-semibold"><i class="fa-solid fa-play mr-2"></i>Watch Now</button>
               <button id="heroInfo" class="bg-zinc-700/80 px-6 py-3 rounded font-semibold"><i class="fa-solid fa-circle-info mr-2"></i>Open Details</button>
-              <button id="heroPrev" class="bg-zinc-700/80 px-5 py-3 rounded font-semibold"><i class="fa-solid fa-chevron-left"></i></button>
-              <button id="heroNext" class="bg-zinc-700/80 px-5 py-3 rounded font-semibold"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@
     </section>
 
     <section class="py-8 space-y-8">
-      <div id="continueSection" class="content-block hidden">
+      <div id="continueSection" class="content-block">
         <div class="row-head">
           <h3><i class="fa-solid fa-clock-rotate-left text-netflix-red mr-2"></i>Continue Watching</h3>
           <span class="row-caption">Pick up where you left off</span>
@@ -151,6 +151,6 @@
 
   <div id="toast" class="hidden fixed bottom-4 right-4 bg-zinc-800 border border-zinc-600 px-4 py-3 rounded-lg text-sm"></div>
 
-  <script type="module" src="src/main.js?v=20260305"></script>
+  <script type="module" src="src/main.js?v=20260305b"></script>
 </body>
 </html>

@@ -274,6 +274,7 @@ async function loadWatchHistory() {
   const email = getSessionEmail();
   if (!email) {
     state.history = [];
+    renderContinueWatching();
     return [];
   }
 
@@ -344,13 +345,15 @@ function renderContinueWatching() {
     .slice(0, 20);
 
   elements.continueRow.innerHTML = "";
+  elements.continueSection.classList.remove("hidden");
 
   if (!items.length) {
-    elements.continueSection.classList.add("hidden");
+    const empty = document.createElement("div");
+    empty.className = "continue-empty";
+    empty.textContent = "Start watching any title and it will appear here automatically.";
+    elements.continueRow.append(empty);
     return;
   }
-
-  elements.continueSection.classList.remove("hidden");
 
   items.forEach(({ entry, progressSeconds }) => {
     const card = document.createElement("article");
@@ -457,9 +460,27 @@ async function loadHero() {
 }
 
 function wireHeroControls() {
+  const animateHeroDirection = (direction) => {
+    const panel = document.querySelector(".hero-panel");
+    if (!panel) return;
+    const className = direction === "next" ? "hero-anim-next" : "hero-anim-prev";
+    panel.classList.remove("hero-anim-next", "hero-anim-prev");
+    void panel.offsetWidth;
+    panel.classList.add(className);
+  };
+
+  const animateNavTap = (button) => {
+    if (!button) return;
+    button.classList.remove("hero-nav-click");
+    void button.offsetWidth;
+    button.classList.add("hero-nav-click");
+  };
+
   if (elements.heroPrev) {
     elements.heroPrev.addEventListener("click", () => {
       if (!state.heroItems.length) return;
+      animateNavTap(elements.heroPrev);
+      animateHeroDirection("prev");
       state.heroIndex -= 1;
       const wrapped = ((state.heroIndex % state.heroItems.length) + state.heroItems.length) % state.heroItems.length;
       state.heroIndex = wrapped;
@@ -475,6 +496,8 @@ function wireHeroControls() {
   if (elements.heroNext) {
     elements.heroNext.addEventListener("click", () => {
       if (!state.heroItems.length) return;
+      animateNavTap(elements.heroNext);
+      animateHeroDirection("next");
       state.heroIndex += 1;
       const wrapped = ((state.heroIndex % state.heroItems.length) + state.heroItems.length) % state.heroItems.length;
       state.heroIndex = wrapped;

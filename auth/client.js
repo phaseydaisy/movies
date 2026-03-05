@@ -49,6 +49,10 @@ function goHome() {
   location.href = "/";
 }
 
+function goSignIn() {
+  location.href = "../signin/";
+}
+
 function wireSignIn() {
   const form = document.getElementById("signinForm");
   if (!form) return false;
@@ -241,11 +245,121 @@ function wireVerify() {
   return true;
 }
 
+function wireResetPassword() {
+  const form = document.getElementById("resetPasswordForm");
+  if (!form) return false;
+
+  const params = new URLSearchParams(location.search);
+  const emailInput = document.getElementById("email");
+  const codeInput = document.getElementById("resetCode");
+  const newPasswordInput = document.getElementById("newPassword");
+  const sendCodeBtn = document.getElementById("sendResetCode");
+  const emailFromQuery = String(params.get("email") || "").trim().toLowerCase();
+  let resendCountdown = null;
+
+  if (emailFromQuery && emailInput) {
+    emailInput.value = emailFromQuery;
+  }
+
+  const resetButtonState = () => {
+    if (!sendCodeBtn) return;
+    sendCodeBtn.disabled = false;
+    sendCodeBtn.textContent = "Send reset code";
+  };
+
+  const startCooldown = (seconds) => {
+    if (!sendCodeBtn) return;
+    const total = Number(seconds);
+    if (!Number.isFinite(total) || total <= 0) {
+      resetButtonState();
+      return;
+    }
+
+    if (resendCountdown) {
+      clearInterval(resendCountdown);
+      resendCountdown = null;
+    }
+
+    let remaining = Math.max(1, Math.ceil(total));
+    sendCodeBtn.disabled = true;
+    sendCodeBtn.textContent = `Send reset code (${remaining}s)`;
+
+    resendCountdown = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(resendCountdown);
+        resendCountdown = null;
+        resetButtonState();
+        return;
+      }
+      sendCodeBtn.textContent = `Send reset code (${remaining}s)`;
+    }, 1000);
+  };
+
+  if (sendCodeBtn) {
+    sendCodeBtn.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (sendCodeBtn.disabled) return;
+
+      const email = String(emailInput?.value || "").trim().toLowerCase();
+      if (!email) {
+        showMessage("Email is required.");
+        return;
+      }
+
+      sendCodeBtn.disabled = true;
+      sendCodeBtn.textContent = "Sending...";
+
+      const data = await callAuthApi("/auth/reset/request", { email }).catch((error) => ({ ok: false, message: error.message }));
+      showMessage(data.message || (data.ok ? "Reset code sent." : "Could not send reset code."), !data.ok);
+
+      const retryAfterSeconds = Number(data?.retryAfterSeconds || 0);
+      if (retryAfterSeconds > 0) {
+        startCooldown(retryAfterSeconds);
+      } else {
+        resetButtonState();
+      }
+    });
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = String(emailInput?.value || "").trim().toLowerCase();
+    const code = String(codeInput?.value || "").trim();
+    const newPassword = String(newPasswordInput?.value || "");
+
+    if (!email || !code || !newPassword) {
+      showMessage("Email, reset code, and new password are required.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    const data = await callAuthApi("/auth/reset/confirm", { email, code, newPassword }).catch((error) => ({ ok: false, message: error.message }));
+
+    if (!data.ok) {
+      showMessage(data.message || "Could not reset password.");
+      return;
+    }
+
+    clearSession();
+    showMessage(data.message || "Password reset. Redirecting to sign in...", false);
+    setTimeout(goSignIn, 700);
+  });
+
+  return true;
+}
+
 function init() {
   const signin = wireSignIn();
   const signup = wireSignUp();
   const verify = wireVerify();
-  if (!signin && !signup && !verify) {
+  const reset = wireResetPassword();
+  if (!signin && !signup && !verify && !reset) {
     console.warn("Auth form not found.");
   }
 }
