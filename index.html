@@ -34,7 +34,6 @@
         <a href="#" id="navHome" class="hover:text-white">Dashboard</a>
         <a href="#" id="navMovies" class="hover:text-white">Movies</a>
         <a href="#" id="navTv" class="hover:text-white">Series</a>
-        <a href="#" id="navList" class="hover:text-white">History</a>
       </nav>
 
       <div class="w-full max-w-2xl flex items-center gap-2">
@@ -48,7 +47,13 @@
         <button id="signInBtn" class="auth-btn">Sign in</button>
         <div id="accountPill" class="hidden account-pill">
           <span id="accountName" class="truncate max-w-[100px]"></span>
-          <button id="signOutBtn" class="account-signout">Sign out</button>
+          <button id="accountSettingsBtn" class="account-settings" type="button">
+            Settings <i class="fa-solid fa-chevron-down"></i>
+          </button>
+          <div id="accountDropdown" class="hidden account-dropdown">
+            <button id="navList" type="button" class="account-dropdown-item">History</button>
+            <button id="signOutBtn" type="button" class="account-dropdown-item">Sign out</button>
+          </div>
         </div>
       </div>
     </div>

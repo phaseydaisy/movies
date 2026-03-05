@@ -34,6 +34,8 @@ const elements = {
   signInBtn: document.getElementById("signInBtn"),
   accountPill: document.getElementById("accountPill"),
   accountName: document.getElementById("accountName"),
+  accountSettingsBtn: document.getElementById("accountSettingsBtn"),
+  accountDropdown: document.getElementById("accountDropdown"),
   signOutBtn: document.getElementById("signOutBtn"),
   detailModal: document.getElementById("detailModal"),
   closeDetail: document.getElementById("closeDetail"),
@@ -102,6 +104,7 @@ function syncAuthUi() {
   if (elements.signUpBtn) elements.signUpBtn.classList.toggle("hidden", signedIn);
   if (elements.signInBtn) elements.signInBtn.classList.toggle("hidden", signedIn);
   if (elements.accountPill) elements.accountPill.classList.toggle("hidden", !signedIn);
+  if (!signedIn && elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
   if (signedIn && elements.accountName) {
     elements.accountName.textContent = state.session.name || state.session.email || "Account";
   }
@@ -118,7 +121,21 @@ function wireAuth() {
     location.href = "signin/";
   });
 
+  if (elements.accountSettingsBtn && elements.accountDropdown) {
+    elements.accountSettingsBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      elements.accountDropdown.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", (event) => {
+      if (elements.accountPill && !elements.accountPill.contains(event.target)) {
+        elements.accountDropdown.classList.add("hidden");
+      }
+    });
+  }
+
   elements.signOutBtn.addEventListener("click", () => {
+    if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
     setAuthSession(null);
     state.history = [];
     syncAuthUi();
@@ -219,7 +236,7 @@ function renderMyList() {
   }
 
   if (!list.length) {
-    elements.myListResults.innerHTML = '<p class="text-gray-400">No watch history yet. Start watching and titles will appear here automatically.</p>';
+    elements.myListResults.innerHTML = '<p class="text-gray-400">your list is empty</p>';
     return;
   }
 
@@ -495,6 +512,7 @@ function wireNav() {
 
   elements.navList.addEventListener("click", (event) => {
     event.preventDefault();
+    if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
     loadWatchHistory()
       .finally(() => {
         renderMyList();
