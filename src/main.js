@@ -1,11 +1,11 @@
-import { getJson, poster, backdrop, fetchTrailerKey } from "./api.js";
+import { getJson, poster, backdrop } from "./api.js";
 import { TMDB_API_KEY, AUTH_API_BASE_URL } from "./config.js";
-import { MOVIES, SHOWS, TEEN, ALL, getLocalItem } from "./catalog.js";
+import { MOVIES, SHOWS, TEEN } from "./catalog.js";
 
 const state = {
   hero: null,
-  detail: null,
-  detailType: "movie",
+  heroItems: [],
+  heroIndex: 0,
   searchFilter: "multi",
   searchQuery: "",
   searchPage: 1,
@@ -14,8 +14,7 @@ const state = {
   history: [],
 };
 
-const AUTH_SESSION_KEY = "cinenest:session";
-const RESUME_STORAGE_KEY = "cinenest:playback-progress";
+const AUTH_SESSION_KEY = "movies:session";
 
 const elements = {
   heroBackdrop: document.getElementById("heroBackdrop"),
@@ -23,6 +22,8 @@ const elements = {
   heroOverview: document.getElementById("heroOverview"),
   heroPlay: document.getElementById("heroPlay"),
   heroInfo: document.getElementById("heroInfo"),
+  heroPrev: document.getElementById("heroPrev"),
+  heroNext: document.getElementById("heroNext"),
   moviesRow: document.getElementById("moviesRow"),
   tvRow: document.getElementById("tvRow"),
   animeRow: document.getElementById("animeRow"),
@@ -38,15 +39,9 @@ const elements = {
   accountSettingsBtn: document.getElementById("accountSettingsBtn"),
   accountDropdown: document.getElementById("accountDropdown"),
   signOutBtn: document.getElementById("signOutBtn"),
-  detailModal: document.getElementById("detailModal"),
-  closeDetail: document.getElementById("closeDetail"),
-  detailBackdrop: document.getElementById("detailBackdrop"),
-  detailTitle: document.getElementById("detailTitle"),
-  detailMeta: document.getElementById("detailMeta"),
-  detailOverview: document.getElementById("detailOverview"),
-  trailerWrap: document.getElementById("trailerWrap"),
-  trailerBtn: document.getElementById("trailerBtn"),
-  watchBtn: document.getElementById("watchBtn"),
+  detailPageOverlay: document.getElementById("detailPageOverlay"),
+  detailPageFrame: document.getElementById("detailPageFrame"),
+  closeDetailPageOverlay: document.getElementById("closeDetailPageOverlay"),
   toast: document.getElementById("toast"),
   navHome: document.getElementById("navHome"),
   navMovies: document.getElementById("navMovies"),
@@ -172,6 +167,30 @@ function closeSearchPage() {
   }, 280);
 }
 
+function openDetailPage(id, type = "movie", source = "tmdb") {
+  const url = `pages/view.html?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&source=${encodeURIComponent(source)}`;
+
+  if (!elements.detailPageOverlay || !elements.detailPageFrame) {
+    location.href = url;
+    return;
+  }
+
+  elements.detailPageFrame.src = url;
+  elements.detailPageOverlay.classList.remove("hidden");
+  requestAnimationFrame(() => elements.detailPageOverlay.classList.add("is-open"));
+}
+
+function closeDetailPage() {
+  if (!elements.detailPageOverlay) return;
+  elements.detailPageOverlay.classList.remove("is-open");
+  setTimeout(() => {
+    elements.detailPageOverlay.classList.add("hidden");
+    if (elements.detailPageFrame) {
+      elements.detailPageFrame.src = "about:blank";
+    }
+  }, 280);
+}
+
 function toast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.remove("hidden");
@@ -187,52 +206,44 @@ function formatYear(item) {
   return date ? new Date(date).getFullYear() : "N/A";
 }
 
-function findLocalByTmdbId(id, type) {
-  return ALL.find((item) => String(item.tmdb_id) === String(id) && item.media_type === type) || null;
-}
-
 function getSessionEmail() {
   return String(state.session?.email || "").trim().toLowerCase();
 }
 
-function readProgressMap() {
-  try {
-    return JSON.parse(localStorage.getItem(RESUME_STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function getProgressKeyForEntry(entry) {
+function getTitleHistoryKey(entry) {
   const source = String(entry?.source || "tmdb");
   const type = String(entry?.type || "movie");
   const id = String(entry?.id || "");
-
-  if (!id) return "";
-  if (type !== "tv") return `${source}:${type}:${id}`;
-
-  const season = Number(entry?.season || 0);
-  const episode = Number(entry?.episode || 0);
-  if (season > 0 && episode > 0) {
-    return `${source}:${type}:${id}:s${season}:e${episode}`;
-  }
-
   return `${source}:${type}:${id}`;
+}
+
+function dedupeHistoryLatest(list) {
+  const map = new Map();
+  list.forEach((entry) => {
+    const key = getTitleHistoryKey(entry);
+    const existing = map.get(key);
+    if (!existing || Number(entry?.watchedAt || 0) > Number(existing?.watchedAt || 0)) {
+      map.set(key, entry);
+    }
+  });
+  return [...map.values()].sort((a, b) => Number(b?.watchedAt || 0) - Number(a?.watchedAt || 0));
 }
 
 function buildWatchHref(entry) {
   const source = entry.source || "tmdb";
+  const start = Math.max(0, Math.floor(Number(entry?.resumeSeconds || 0)));
   const base = `pages/watch.html?id=${entry.id}&type=${entry.type}&source=${source}`;
+  const startParams = start > 0 ? `&start=${start}` : "";
 
-  if (entry.type !== "tv") return base;
+  if (entry.type !== "tv") return `${base}${startParams}`;
 
   const season = Number(entry?.season || 0);
   const episode = Number(entry?.episode || 0);
   if (season > 0 && episode > 0) {
-    return `${base}&season=${season}&episode=${episode}`;
+    return `${base}&season=${season}&episode=${episode}${startParams}`;
   }
 
-  return base;
+  return `${base}${startParams}`;
 }
 
 function formatHistoryTime(value) {
@@ -267,7 +278,7 @@ async function loadWatchHistory() {
     return [];
   }
 
-  state.history = Array.isArray(data.history) ? data.history : [];
+  state.history = dedupeHistoryLatest(Array.isArray(data.history) ? data.history : []);
   renderContinueWatching();
   return state.history;
 }
@@ -318,15 +329,11 @@ function renderMyList() {
 function renderContinueWatching() {
   if (!elements.continueSection || !elements.continueRow) return;
 
-  const progressMap = readProgressMap();
   const items = state.history
-    .map((entry) => {
-      const key = getProgressKeyForEntry(entry);
-      return {
-        entry,
-        progressSeconds: Number(progressMap[key] || 0),
-      };
-    })
+    .map((entry) => ({
+      entry,
+      progressSeconds: Math.max(0, Math.floor(Number(entry?.resumeSeconds || 0))),
+    }))
     .filter((item) => item.progressSeconds > 0)
     .slice(0, 20);
 
@@ -362,7 +369,7 @@ function renderContinueWatching() {
     });
 
     card.querySelector('[data-action="info"]').addEventListener("click", () => {
-      openDetail(entry.id, entry.type, entry.source || "tmdb");
+      openDetailPage(entry.id, entry.type, entry.source || "tmdb");
     });
 
     elements.continueRow.append(card);
@@ -392,25 +399,36 @@ function createCard(item, type = "movie", source = "tmdb") {
   });
 
   card.querySelector('[data-action="info"]').addEventListener("click", () => {
-    openDetail(item.id, type, source);
+    openDetailPage(item.id, type, source);
   });
 
   return card;
 }
 
 async function loadHero() {
+  const applyHero = (item, type = "movie", source = "tmdb") => {
+    if (!item) return;
+    state.hero = item;
+    elements.heroBackdrop.style.backgroundImage = `url(${backdrop(item.backdrop_path)})`;
+    elements.heroTitle.textContent = formatTitle(item);
+    elements.heroOverview.textContent = item.overview || "No overview available.";
+    elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${item.id}&type=${type}&source=${source}`);
+    elements.heroInfo.onclick = () => openDetailPage(item.id, type, source);
+  };
+
+  const syncHeroByIndex = () => {
+    if (!state.heroItems.length) return;
+    const wrapped = ((state.heroIndex % state.heroItems.length) + state.heroItems.length) % state.heroItems.length;
+    state.heroIndex = wrapped;
+    const selected = state.heroItems[wrapped];
+    applyHero(selected.item, selected.type, selected.source);
+  };
+
   if (state.mode === "local") {
-    const top = MOVIES.slice(0, 5);
-    const chosen = top[Math.floor(Math.random() * Math.max(top.length, 1))];
-    if (!chosen) return;
-
-    state.hero = chosen;
-    elements.heroBackdrop.style.backgroundImage = `url(${backdrop(chosen.backdrop_path)})`;
-    elements.heroTitle.textContent = formatTitle(chosen);
-    elements.heroOverview.textContent = chosen.overview || "No overview available.";
-
-    elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${chosen.id}&type=movie&source=local`);
-    elements.heroInfo.onclick = () => openDetail(chosen.id, "movie", "local");
+    const top = MOVIES.slice(0, 8);
+    state.heroItems = top.map((item) => ({ item, type: "movie", source: "local" }));
+    state.heroIndex = 0;
+    syncHeroByIndex();
     return;
   }
 
@@ -422,17 +440,42 @@ async function loadHero() {
     await loadHero();
     return;
   }
-  const top = data.results?.slice(0, 5) || [];
-  const chosen = top[Math.floor(Math.random() * Math.max(top.length, 1))];
-  if (!chosen) return;
+  const top = data.results?.slice(0, 12) || [];
+  state.heroItems = top.map((item) => ({ item, type: "movie", source: "tmdb" }));
+  state.heroIndex = 0;
+  syncHeroByIndex();
+}
 
-  state.hero = chosen;
-  elements.heroBackdrop.style.backgroundImage = `url(${backdrop(chosen.backdrop_path)})`;
-  elements.heroTitle.textContent = formatTitle(chosen);
-  elements.heroOverview.textContent = chosen.overview || "No overview available.";
+function wireHeroControls() {
+  if (elements.heroPrev) {
+    elements.heroPrev.addEventListener("click", () => {
+      if (!state.heroItems.length) return;
+      state.heroIndex -= 1;
+      const wrapped = ((state.heroIndex % state.heroItems.length) + state.heroItems.length) % state.heroItems.length;
+      state.heroIndex = wrapped;
+      const selected = state.heroItems[wrapped];
+      elements.heroBackdrop.style.backgroundImage = `url(${backdrop(selected.item.backdrop_path)})`;
+      elements.heroTitle.textContent = formatTitle(selected.item);
+      elements.heroOverview.textContent = selected.item.overview || "No overview available.";
+      elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${selected.item.id}&type=${selected.type}&source=${selected.source}`);
+      elements.heroInfo.onclick = () => openDetailPage(selected.item.id, selected.type, selected.source);
+    });
+  }
 
-  elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${chosen.id}&type=movie`);
-  elements.heroInfo.onclick = () => openDetail(chosen.id, "movie");
+  if (elements.heroNext) {
+    elements.heroNext.addEventListener("click", () => {
+      if (!state.heroItems.length) return;
+      state.heroIndex += 1;
+      const wrapped = ((state.heroIndex % state.heroItems.length) + state.heroItems.length) % state.heroItems.length;
+      state.heroIndex = wrapped;
+      const selected = state.heroItems[wrapped];
+      elements.heroBackdrop.style.backgroundImage = `url(${backdrop(selected.item.backdrop_path)})`;
+      elements.heroTitle.textContent = formatTitle(selected.item);
+      elements.heroOverview.textContent = selected.item.overview || "No overview available.";
+      elements.heroPlay.onclick = () => (location.href = `pages/watch.html?id=${selected.item.id}&type=${selected.type}&source=${selected.source}`);
+      elements.heroInfo.onclick = () => openDetailPage(selected.item.id, selected.type, selected.source);
+    });
+  }
 }
 
 async function loadRows() {
@@ -471,52 +514,6 @@ async function loadRows() {
   (sixteen.results || []).slice(0, 20).forEach((item) => elements.animeRow.append(createCard(item, "tv", "tmdb")));
 }
 
-async function openDetail(id, type = "movie", source = "tmdb") {
-  state.detailType = type;
-
-  try {
-    if (source === "local") {
-      state.detail = getLocalItem(id, type);
-    } else {
-      state.detail = await getJson(`/${type}/${id}`);
-    }
-  } catch {
-    state.detail = findLocalByTmdbId(id, type);
-    source = "local";
-  }
-  if (!state.detail) {
-    toast("Could not load details for this title.");
-    return;
-  }
-
-  elements.detailBackdrop.src = backdrop(state.detail.backdrop_path);
-  elements.detailTitle.textContent = formatTitle(state.detail);
-  elements.detailMeta.textContent = `${formatYear(state.detail)} • ${state.detail.vote_average ? state.detail.vote_average.toFixed(1) : "N/A"} • ${state.detail.runtime || state.detail.number_of_seasons || "N/A"}`;
-  elements.detailOverview.textContent = state.detail.overview || "No overview available.";
-  elements.trailerWrap.classList.add("hidden");
-  elements.trailerWrap.innerHTML = "";
-  elements.detailModal.classList.remove("hidden");
-
-  elements.watchBtn.onclick = () => {
-    location.href = `pages/watch.html?id=${id}&type=${type}&source=${source}`;
-  };
-
-  elements.trailerBtn.onclick = async () => {
-    let key;
-    try {
-      key = source === "local" ? state.detail.trailer_key : await fetchTrailerKey(id, type);
-    } catch {
-      key = state.detail.trailer_key;
-    }
-    if (!key) {
-      toast("Trailer not available");
-      return;
-    }
-    elements.trailerWrap.classList.remove("hidden");
-    elements.trailerWrap.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${key}?autoplay=1&mute=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-  };
-}
-
 function runSearchFromInput() {
   state.searchQuery = elements.searchInput.value;
   state.searchPage = 1;
@@ -546,7 +543,7 @@ function wireSearch() {
         closeSearchPage();
         return;
       }
-      elements.detailModal.classList.add("hidden");
+      closeDetailPage();
     }
   });
 }
@@ -565,16 +562,23 @@ function wireSearchOverlay() {
   });
 
   window.addEventListener("message", (event) => {
-    if (event.data?.type === "cinenest-close-search-overlay") {
+    if (event.data?.type === "movies-close-search-overlay") {
       closeSearchPage();
     }
   });
 }
 
-function wireDetailClose() {
-  elements.closeDetail.addEventListener("click", () => {
-    elements.detailModal.classList.add("hidden");
-    elements.trailerWrap.innerHTML = "";
+function wireDetailOverlay() {
+  if (!elements.detailPageOverlay || !elements.detailPageFrame || !elements.closeDetailPageOverlay) return;
+
+  elements.closeDetailPageOverlay.addEventListener("click", () => {
+    closeDetailPage();
+  });
+
+  elements.detailPageOverlay.addEventListener("click", (event) => {
+    if (event.target === elements.detailPageOverlay) {
+      closeDetailPage();
+    }
   });
 }
 
@@ -631,36 +635,7 @@ function wireNav() {
   });
 }
 
-function wireQolControls() {
-  document.querySelectorAll("[data-qol-scroll]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const target = button.dataset.qolScroll;
-      if (target === "top") {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      if (target === "movies") {
-        elements.navMovies.click();
-        return;
-      }
-      if (target === "tv") {
-        elements.navTv.click();
-      }
-    });
-  });
-
-  document.querySelectorAll("[data-qol-action]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const action = button.dataset.qolAction;
-      if (action === "search") {
-        openSearchPage(elements.searchInput.value);
-      }
-      if (action === "list") {
-        elements.navList.click();
-      }
-    });
-  });
-
+function wireGlobalShortcuts() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "/" && document.activeElement !== elements.searchInput) {
       event.preventDefault();
@@ -673,10 +648,11 @@ async function init() {
   try {
     wireSearch();
     wireSearchOverlay();
+    wireDetailOverlay();
     wireAuth();
+    wireHeroControls();
     wireNav();
-    wireQolControls();
-    wireDetailClose();
+    wireGlobalShortcuts();
     wireComingSoon();
     await Promise.all([loadHero(), loadRows()]);
     await loadWatchHistory();

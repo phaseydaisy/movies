@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CineNest • Discover What To Watch</title>
+  <title>Movies • Discover What To Watch</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -32,7 +32,7 @@
     <div class="app-shell px-4 lg:px-8 py-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-400 to-rose-500 grid place-items-center font-black text-black">C</div>
-        <h1 class="text-netflix-red text-2xl font-bold cursor-pointer brand-mark" onclick="location.href='/'">CineNest</h1>
+        <h1 class="text-netflix-red text-2xl font-bold cursor-pointer brand-mark" onclick="location.href='/'">Movies</h1>
       </div>
 
       <nav class="hidden lg:flex items-center gap-6 text-sm text-gray-200">
@@ -65,16 +65,8 @@
   </header>
 
   <main class="pt-24 app-shell px-4 lg:px-8 pb-12">
-    <section class="top-utility-bar mt-2 mb-5">
-      <button data-qol-scroll="top" class="utility-pill"><i class="fa-solid fa-house"></i>Top</button>
-      <button data-qol-scroll="movies" class="utility-pill"><i class="fa-solid fa-film"></i>Jump to Movies</button>
-      <button data-qol-scroll="tv" class="utility-pill"><i class="fa-solid fa-tv"></i>Jump to Series</button>
-      <button data-qol-action="search" class="utility-pill"><i class="fa-solid fa-magnifying-glass"></i>Open Search</button>
-      <button data-qol-action="list" class="utility-pill"><i class="fa-solid fa-bookmark"></i>Open Watch History</button>
-    </section>
-
-    <section id="homeLanding" class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-      <div class="xl:col-span-8 relative h-[66vh] overflow-hidden hero-panel">
+    <section id="homeLanding" class="grid grid-cols-1 gap-6">
+      <div class="relative h-[66vh] overflow-hidden hero-panel">
         <div id="heroBackdrop" class="absolute inset-0 bg-cover bg-center"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
@@ -86,29 +78,12 @@
             <div class="mt-6 flex flex-wrap gap-3">
               <button id="heroPlay" class="bg-white text-black px-6 py-3 rounded font-semibold"><i class="fa-solid fa-play mr-2"></i>Watch Now</button>
               <button id="heroInfo" class="bg-zinc-700/80 px-6 py-3 rounded font-semibold"><i class="fa-solid fa-circle-info mr-2"></i>Open Details</button>
+              <button id="heroPrev" class="bg-zinc-700/80 px-5 py-3 rounded font-semibold"><i class="fa-solid fa-chevron-left"></i></button>
+              <button id="heroNext" class="bg-zinc-700/80 px-5 py-3 rounded font-semibold"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
           </div>
         </div>
       </div>
-
-      <aside class="xl:col-span-4 content-block flex flex-col gap-4">
-        <h3 class="text-xl font-semibold">Discover Faster</h3>
-        <p class="text-sm text-gray-300">Browse by what you’re in the mood for, then jump straight into rows below.</p>
-        <div class="grid grid-cols-2 gap-2">
-          <button data-qol-scroll="movies" class="utility-pill justify-center">Action</button>
-          <button data-qol-scroll="tv" class="utility-pill justify-center">Drama</button>
-          <button data-qol-action="search" class="utility-pill justify-center">Sci-Fi</button>
-          <button data-qol-action="list" class="utility-pill justify-center">Saved</button>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-gray-300">
-          <p class="font-semibold text-white mb-1">Traversal Tips</p>
-          <ul class="space-y-1">
-            <li>• Press <strong>/</strong> for instant search</li>
-            <li>• Use filter chips inside search overlay</li>
-            <li>• Watch any title to auto-save history</li>
-          </ul>
-        </div>
-      </aside>
     </section>
 
     <section class="py-8 space-y-8">
@@ -155,27 +130,12 @@
     </div>
   </div>
 
-  <div id="detailModal" class="hidden fixed inset-0 z-[70] bg-black/80 p-4 lg:p-10">
-    <div class="max-w-5xl mx-auto bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden max-h-full flex flex-col">
-      <div class="relative h-64 lg:h-80">
-        <img id="detailBackdrop" class="w-full h-full object-cover" alt="Backdrop" />
-        <div class="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent"></div>
-        <button id="closeDetail" class="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/70"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-4">
-          <div>
-            <h4 id="detailTitle" class="text-2xl lg:text-4xl font-bold"></h4>
-            <p id="detailMeta" class="text-sm text-gray-200 mt-1"></p>
-          </div>
-          <div class="flex gap-2">
-            <button id="trailerBtn" class="bg-netflix-red px-4 py-2 rounded font-semibold"><i class="fa-solid fa-play mr-1"></i>Trailer</button>
-            <button id="watchBtn" class="bg-white text-black px-4 py-2 rounded font-semibold">Watch</button>
-          </div>
-        </div>
-      </div>
-      <div class="p-4 lg:p-6 overflow-auto space-y-4">
-        <p id="detailOverview" class="text-gray-300"></p>
-        <div id="trailerWrap" class="hidden aspect-video w-full bg-black rounded overflow-hidden"></div>
-      </div>
+  <div id="detailPageOverlay" class="hidden">
+    <div class="search-page-shell">
+      <button id="closeDetailPageOverlay" class="search-overlay-close" aria-label="Close details overlay">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <iframe id="detailPageFrame" title="Details" src="about:blank"></iframe>
     </div>
   </div>
 

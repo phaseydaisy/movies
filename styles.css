@@ -533,7 +533,24 @@ main aside {
   transition: opacity 0.26s ease;
 }
 
+#detailPageOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  padding: clamp(0.8rem, 2vw, 1.25rem);
+  background: rgba(4, 6, 12, 0.66);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease;
+}
+
 #searchPageOverlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#detailPageOverlay.is-open {
   opacity: 1;
   pointer-events: auto;
 }
@@ -554,12 +571,40 @@ main aside {
   transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.2, 1), opacity 0.3s ease;
 }
 
+#detailPageOverlay .search-page-shell {
+  position: relative;
+  inline-size: min(1260px, 100%);
+  block-size: min(90vh, 980px);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(109, 139, 255, 0.18);
+  transform: translateY(26px) scale(0.965);
+  opacity: 0;
+  transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.2, 1), opacity 0.3s ease;
+}
+
 #searchPageOverlay.is-open .search-page-shell {
   transform: translateY(0) scale(1);
   opacity: 1;
 }
 
+#detailPageOverlay.is-open .search-page-shell {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
 #searchPageFrame {
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  background: transparent;
+}
+
+#detailPageFrame {
   inline-size: 100%;
   block-size: 100%;
   border: 0;
@@ -1139,5 +1184,335 @@ main aside img {
 
   .watch-nav-btn i {
     margin-right: 0;
+  }
+}
+
+/* ---------- Mobile / Tablet Hardening ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (max-width: 980px) {
+  :root {
+    --card-width: 156px;
+  }
+
+  #navbar .app-shell {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  #navbar .app-shell > div:first-child {
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+
+  #navbar .app-shell > div:last-child {
+    inline-size: 100%;
+    max-inline-size: none;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  #navbar .app-shell > div:last-child > .relative {
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  #searchInput {
+    font-size: 16px;
+  }
+
+  .account-pill {
+    margin-inline-start: auto;
+  }
+
+  .account-dropdown {
+    inset-inline-end: 0;
+    min-inline-size: 170px;
+  }
+
+  #homeLanding {
+    gap: 0.8rem;
+  }
+
+  .hero-panel {
+    border-radius: 18px;
+  }
+
+  .row-head {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .row-caption {
+    font-size: 0.72rem;
+  }
+
+  .media-poster {
+    block-size: 220px;
+  }
+
+  .media-content {
+    padding: 0.62rem;
+  }
+
+  .media-title {
+    min-block-size: 2.35rem;
+    font-size: 0.86rem;
+  }
+
+  .media-actions {
+    gap: 0.42rem;
+  }
+
+  .history-card {
+    grid-template-columns: 72px 1fr;
+    gap: 0.7rem;
+    padding: 0.58rem;
+  }
+
+  .history-card-poster {
+    inline-size: 72px;
+    block-size: 98px;
+  }
+
+  .search-floating-query {
+    font-size: 0.76rem;
+    max-inline-size: calc(100% - 1.2rem);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #searchPageOverlay,
+  #detailPageOverlay {
+    padding: 0;
+  }
+
+  #searchPageOverlay .search-page-shell,
+  #detailPageOverlay .search-page-shell {
+    inline-size: 100%;
+    block-size: 100vh;
+    border-radius: 0;
+    border-inline: 0;
+    border-block: 0;
+    margin: 0;
+  }
+
+  .search-overlay-close {
+    inset-inline-end: 0.6rem;
+    inset-block-start: 0.6rem;
+  }
+
+  .watch-topbar .app-shell {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .watch-topbar .app-shell > div:first-child,
+  .watch-topbar .app-shell > div:last-child {
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+
+  .watch-page {
+    padding-block-start: 0.95rem;
+  }
+
+  .watch-main-panel {
+    padding: 0.72rem;
+  }
+
+  .watch-controls-block {
+    padding: 0.66rem;
+  }
+
+  #serverList {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #episodeControls .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #playerWrap {
+    border-radius: 12px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --card-width: 144px;
+  }
+
+  #navbar {
+    backdrop-filter: blur(10px) saturate(130%);
+  }
+
+  #navbar h1 {
+    font-size: 1.45rem !important;
+  }
+
+  .auth-btn,
+  .account-settings {
+    font-size: 0.72rem;
+    padding: 0.42rem 0.58rem;
+  }
+
+  #heroTitle {
+    font-size: clamp(1.7rem, 8.6vw, 2.35rem) !important;
+  }
+
+  #heroOverview {
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  #heroPlay,
+  #heroInfo,
+  #heroPrev,
+  #heroNext {
+    padding: 0.62rem 0.78rem !important;
+    font-size: 0.82rem;
+  }
+
+  .card-row {
+    gap: 0.72rem;
+    padding-block-end: 0.55rem;
+    scroll-snap-type: x mandatory;
+  }
+
+  .media-card {
+    scroll-snap-align: start;
+  }
+
+  .media-poster {
+    block-size: 200px;
+  }
+
+  .media-actions button {
+    padding: 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .history-card-foot {
+    gap: 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  #searchPageOverlay .search-page-shell,
+  #detailPageOverlay .search-page-shell {
+    block-size: 100dvh;
+  }
+
+  .search-shell {
+    border-radius: 0;
+    block-size: 100dvh !important;
+  }
+
+  #searchResults {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.62rem;
+  }
+
+  .search-card img {
+    block-size: 152px;
+  }
+
+  .watch-main-head {
+    gap: 0.5rem;
+    margin-block-end: 0.6rem;
+  }
+
+  .watch-details-btn {
+    padding: 0.44rem 0.66rem;
+    font-size: 0.74rem;
+  }
+
+  #serverList {
+    gap: 0.42rem;
+  }
+
+  #serverList button {
+    font-size: 0.76rem;
+    padding: 0.5rem 0.44rem;
+  }
+
+  .watch-mobile-info {
+    margin-block-start: 0.7rem;
+    padding: 0.72rem;
+  }
+}
+
+@media (max-width: 430px) {
+  :root {
+    --card-width: 136px;
+  }
+
+  #navbar .app-shell {
+    padding-block: 0.62rem !important;
+  }
+
+  #navbar .app-shell > div:last-child {
+    gap: 0.45rem;
+  }
+
+  .account-pill {
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+
+  .account-dropdown {
+    inset-inline: 0;
+    min-inline-size: 0;
+  }
+
+  .hero-kicker {
+    font-size: 0.68rem;
+  }
+
+  #heroPlay,
+  #heroInfo,
+  #heroPrev,
+  #heroNext {
+    flex: 1;
+    justify-content: center;
+    min-inline-size: 0;
+  }
+
+  .row-head h3 {
+    font-size: 1rem;
+  }
+
+  .media-poster {
+    block-size: 186px;
+  }
+
+  .search-card .text {
+    padding: 0.52rem;
+  }
+
+  #searchResults {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .watch-nav-btn {
+    padding: 0.42rem 0.58rem;
+    font-size: 0.74rem;
+  }
+
+  .watch-page {
+    padding-inline: 0.72rem !important;
+  }
+
+  .watch-controls-block {
+    padding: 0.58rem;
+  }
+
+  #episodeControls {
+    padding: 0.62rem !important;
   }
 }

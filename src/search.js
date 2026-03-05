@@ -34,7 +34,7 @@ function isEmbedded() {
 
 function closeSearchView() {
   if (isEmbedded()) {
-    window.parent.postMessage({ type: "cinenest-close-search-overlay" }, "*");
+    window.parent.postMessage({ type: "movies-close-search-overlay" }, "*");
     return;
   }
   location.href = "/";

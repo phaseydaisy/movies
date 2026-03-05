@@ -1,6 +1,6 @@
 import { AUTH_API_BASE_URL } from "../src/config.js";
 
-const AUTH_SESSION_KEY = "cinenest:session";
+const AUTH_SESSION_KEY = "movies:session";
 
 function setSession(session) {
   localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));

@@ -9,6 +9,7 @@ const type = params.get("type") || "movie";
 const source = params.get("source") || "tmdb";
 const initialSeasonParam = Number(params.get("season") || 0);
 const initialEpisodeParam = Number(params.get("episode") || 0);
+const initialStartParam = Number(params.get("start") || params.get("time") || params.get("t") || 0);
 
 const playerWrap = document.getElementById("playerWrap");
 const playerContent = document.getElementById("playerContent");
@@ -38,10 +39,11 @@ let playbackStartedAtMs = 0;
 let playbackBaselineSec = 0;
 let progressSaveTimer = null;
 let pendingResumeSec = null;
+let lastHistorySyncAtMs = 0;
 
 const SERVERS = WATCH_SERVERS;
-const RESUME_STORAGE_KEY = "cinenest:playback-progress";
-const AUTH_SESSION_KEY = "cinenest:session";
+const RESUME_STORAGE_KEY = "movies:playback-progress";
+const AUTH_SESSION_KEY = "movies:session";
 
 function getApiBase() {
   return String(AUTH_API_BASE_URL || "").trim().replace(/\/$/, "");
@@ -72,8 +74,12 @@ async function callAuthApi(path, payload) {
   return data;
 }
 
-function getHistoryEntry() {
+function getHistoryEntry(resumeSecondsOverride = null) {
   if (!currentItem) return null;
+  const resumeSeconds = resumeSecondsOverride === null || resumeSecondsOverride === undefined
+    ? Math.max(0, Math.floor(getEstimatedProgressSeconds()))
+    : Math.max(0, Math.floor(Number(resumeSecondsOverride) || 0));
+
   const base = {
     id: String(id || "").trim(),
     type,
@@ -83,6 +89,7 @@ function getHistoryEntry() {
     vote_average: Number(currentItem.vote_average || 0) || 0,
     release_date: currentItem.release_date || null,
     first_air_date: currentItem.first_air_date || null,
+    resumeSeconds,
   };
 
   if (type === "tv") {
@@ -98,6 +105,24 @@ function recordHistory() {
   const entry = getHistoryEntry();
 
   if (!email || !entry) return;
+
+  callAuthApi("/history/upsert", {
+    email,
+    entry,
+  }).catch(() => {});
+}
+
+function syncHistoryProgress(force = false) {
+  const now = Date.now();
+  if (!force && now - lastHistorySyncAtMs < 15000) return;
+  lastHistorySyncAtMs = now;
+
+  const session = getAuthSession();
+  const email = String(session?.email || "").trim().toLowerCase();
+  if (!email) return;
+
+  const entry = getHistoryEntry(getEstimatedProgressSeconds());
+  if (!entry) return;
 
   callAuthApi("/history/upsert", {
     email,
@@ -165,6 +190,7 @@ function stopProgressTracking() {
   }
   if (playbackStartedAtMs) {
     saveProgressSeconds(getEstimatedProgressSeconds());
+    syncHistoryProgress(true);
   }
 }
 
@@ -174,6 +200,7 @@ function startProgressTracking(startSeconds) {
   playbackStartedAtMs = Date.now();
   progressSaveTimer = setInterval(() => {
     saveProgressSeconds(getEstimatedProgressSeconds());
+    syncHistoryProgress(false);
   }, 5000);
 }
 
@@ -534,6 +561,9 @@ async function init() {
   currentEpisode = Number.isFinite(initialEpisodeParam) && initialEpisodeParam > 0
     ? Math.floor(initialEpisodeParam)
     : 1;
+  pendingResumeSec = Number.isFinite(initialStartParam) && initialStartParam > 0
+    ? Math.floor(initialStartParam)
+    : null;
   episodeCache = new Map();
   const year = (item.release_date || item.first_air_date || "").slice(0, 4) || "N/A";
 
@@ -575,6 +605,16 @@ async function init() {
 
 window.addEventListener("beforeunload", () => {
   stopProgressTracking();
+});
+
+window.addEventListener("pagehide", () => {
+  stopProgressTracking();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    stopProgressTracking();
+  }
 });
 
 init().catch((error) => {
