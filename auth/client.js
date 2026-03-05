@@ -124,8 +124,17 @@ function wireSignUp() {
       return;
     }
 
+    const resend = await callAuthApi("/auth/resend", { email }).catch((error) => ({ ok: false, message: error.message }));
+    const resendCooldown = Number(resend?.retryAfterSeconds || 0);
+    const resendAccepted = resend.ok || resendCooldown > 0;
+
     clearSession();
-    showMessage(data.message || "Account created. Verification required.", false);
+    showMessage(
+      resendAccepted
+        ? "Account created. Verification code sent. Redirecting..."
+        : (resend.message || data.message || "Account created. Verification required."),
+      !resendAccepted
+    );
     setTimeout(() => goVerify(email), 700);
   });
 
