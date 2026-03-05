@@ -105,9 +105,10 @@ function wireSignUp() {
     const name = String(document.getElementById("name")?.value || "").trim();
     const email = String(document.getElementById("email")?.value || "").trim().toLowerCase();
     const password = String(document.getElementById("password")?.value || "");
+    const confirmPassword = String(document.getElementById("confirmPassword")?.value || "");
 
-    if (!name || !email || !password) {
-      showMessage("Name, email, and password are required.");
+    if (!name || !email || !password || !confirmPassword) {
+      showMessage("Name, email, password, and confirm password are required.");
       signupInFlight = false;
       if (submitButton) submitButton.disabled = false;
       return;
@@ -115,6 +116,13 @@ function wireSignUp() {
 
     if (password.length < 6) {
       showMessage("Password must be at least 6 characters.");
+      signupInFlight = false;
+      if (submitButton) submitButton.disabled = false;
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showMessage("Passwords do not match.");
       signupInFlight = false;
       if (submitButton) submitButton.disabled = false;
       return;
@@ -253,6 +261,7 @@ function wireResetPassword() {
   const emailInput = document.getElementById("email");
   const codeInput = document.getElementById("resetCode");
   const newPasswordInput = document.getElementById("newPassword");
+  const confirmPasswordInput = document.getElementById("confirmPassword");
   const sendCodeBtn = document.getElementById("sendResetCode");
   const emailFromQuery = String(params.get("email") || "").trim().toLowerCase();
   let resendCountdown = null;
@@ -328,14 +337,20 @@ function wireResetPassword() {
     const email = String(emailInput?.value || "").trim().toLowerCase();
     const code = String(codeInput?.value || "").trim();
     const newPassword = String(newPasswordInput?.value || "");
+    const confirmPassword = String(confirmPasswordInput?.value || "");
 
-    if (!email || !code || !newPassword) {
-      showMessage("Email, reset code, and new password are required.");
+    if (!email || !code || !newPassword || !confirmPassword) {
+      showMessage("Email, reset code, new password, and confirm password are required.");
       return;
     }
 
     if (newPassword.length < 6) {
       showMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showMessage("Passwords do not match.");
       return;
     }
 
