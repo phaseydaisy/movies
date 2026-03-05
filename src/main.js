@@ -111,13 +111,17 @@ function syncAuthUi() {
 function wireAuth() {
   syncAuthUi();
 
-  elements.signUpBtn.addEventListener("click", () => {
-    location.href = "signup/";
-  });
+  if (elements.signUpBtn) {
+    elements.signUpBtn.addEventListener("click", () => {
+      location.href = "signup/";
+    });
+  }
 
-  elements.signInBtn.addEventListener("click", () => {
-    location.href = "signin/";
-  });
+  if (elements.signInBtn) {
+    elements.signInBtn.addEventListener("click", () => {
+      location.href = "signin/";
+    });
+  }
 
   if (elements.accountSettingsBtn && elements.accountDropdown) {
     elements.accountSettingsBtn.addEventListener("click", (event) => {
@@ -132,14 +136,16 @@ function wireAuth() {
     });
   }
 
-  elements.signOutBtn.addEventListener("click", () => {
-    if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
-    setAuthSession(null);
-    state.history = [];
-    renderContinueWatching();
-    syncAuthUi();
-    toast("Signed out");
-  });
+  if (elements.signOutBtn) {
+    elements.signOutBtn.addEventListener("click", () => {
+      if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
+      setAuthSession(null);
+      state.history = [];
+      renderContinueWatching();
+      syncAuthUi();
+      toast("Signed out");
+    });
+  }
 }
 
 function openSearchPage(rawQuery = "") {
@@ -406,6 +412,10 @@ function createCard(item, type = "movie", source = "tmdb") {
 }
 
 async function loadHero() {
+  if (!elements.heroBackdrop || !elements.heroTitle || !elements.heroOverview || !elements.heroPlay || !elements.heroInfo) {
+    return;
+  }
+
   const applyHero = (item, type = "movie", source = "tmdb") => {
     if (!item) return;
     state.hero = item;
@@ -479,6 +489,10 @@ function wireHeroControls() {
 }
 
 async function loadRows() {
+  if (!elements.moviesRow || !elements.tvRow || !elements.animeRow) {
+    return;
+  }
+
   if (state.mode === "local") {
     elements.moviesRow.innerHTML = "";
     elements.tvRow.innerHTML = "";
@@ -515,12 +529,15 @@ async function loadRows() {
 }
 
 function runSearchFromInput() {
+  if (!elements.searchInput) return;
   state.searchQuery = elements.searchInput.value;
   state.searchPage = 1;
   openSearchPage(state.searchQuery);
 }
 
 function wireSearch() {
+  if (!elements.searchInput || !elements.searchBtn) return;
+
   elements.searchInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     runSearchFromInput();
@@ -599,43 +616,61 @@ function wireNav() {
     window.scrollTo({ top: y, behavior: "smooth" });
   };
 
-  elements.navHome.addEventListener("click", (event) => {
-    event.preventDefault();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  if (elements.navHome) {
+    elements.navHome.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 
-  elements.navMovies.addEventListener("click", (event) => {
-    event.preventDefault();
-    scrollToSection(elements.moviesSection);
-  });
+  if (elements.navMovies) {
+    elements.navMovies.addEventListener("click", (event) => {
+      event.preventDefault();
+      scrollToSection(elements.moviesSection);
+    });
+  }
 
-  elements.navTv.addEventListener("click", (event) => {
-    event.preventDefault();
-    scrollToSection(elements.tvSection);
-  });
+  if (elements.navTv) {
+    elements.navTv.addEventListener("click", (event) => {
+      event.preventDefault();
+      scrollToSection(elements.tvSection);
+    });
+  }
 
-  elements.navList.addEventListener("click", (event) => {
-    event.preventDefault();
-    if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
-    loadWatchHistory()
-      .finally(() => {
-        renderMyList();
-        elements.myListModal.classList.remove("hidden");
-      });
-  });
+  if (elements.navList) {
+    elements.navList.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
+      loadWatchHistory()
+        .finally(() => {
+          renderMyList();
+          if (elements.myListModal) {
+            elements.myListModal.classList.remove("hidden");
+          }
+        });
+    });
+  }
 
-  elements.closeMyList.addEventListener("click", () => {
-    elements.myListModal.classList.add("hidden");
-  });
+  if (elements.closeMyList) {
+    elements.closeMyList.addEventListener("click", () => {
+      if (elements.myListModal) {
+        elements.myListModal.classList.add("hidden");
+      }
+    });
+  }
 
-  elements.myListModal.addEventListener("click", (event) => {
-    if (event.target === elements.myListModal) {
-      elements.myListModal.classList.add("hidden");
-    }
-  });
+  if (elements.myListModal) {
+    elements.myListModal.addEventListener("click", (event) => {
+      if (event.target === elements.myListModal) {
+        elements.myListModal.classList.add("hidden");
+      }
+    });
+  }
 }
 
 function wireGlobalShortcuts() {
+  if (!elements.searchInput) return;
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "/" && document.activeElement !== elements.searchInput) {
       event.preventDefault();
