@@ -7,6 +7,8 @@ const params = new URLSearchParams(location.search);
 const id = params.get("id");
 const type = params.get("type") || "movie";
 const source = params.get("source") || "tmdb";
+const initialSeasonParam = Number(params.get("season") || 0);
+const initialEpisodeParam = Number(params.get("episode") || 0);
 
 const playerWrap = document.getElementById("playerWrap");
 const playerContent = document.getElementById("playerContent");
@@ -469,6 +471,10 @@ async function setupEpisodeControls(item) {
   tmdbTvId = source === "tmdb" ? Number(id) : Number(item.tmdb_id || 0);
   const seasonsCount = Math.max(1, Number(item.number_of_seasons || 1));
 
+  currentSeason = Number.isFinite(currentSeason) && currentSeason > 0
+    ? Math.min(Math.floor(currentSeason), seasonsCount)
+    : 1;
+
   seasonSelect.innerHTML = "";
   for (let season = 1; season <= seasonsCount; season += 1) {
     const option = document.createElement("option");
@@ -522,8 +528,12 @@ async function init() {
     return;
   }
   currentItem = item;
-  currentSeason = 1;
-  currentEpisode = 1;
+  currentSeason = Number.isFinite(initialSeasonParam) && initialSeasonParam > 0
+    ? Math.floor(initialSeasonParam)
+    : 1;
+  currentEpisode = Number.isFinite(initialEpisodeParam) && initialEpisodeParam > 0
+    ? Math.floor(initialEpisodeParam)
+    : 1;
   episodeCache = new Map();
   const year = (item.release_date || item.first_air_date || "").slice(0, 4) || "N/A";
 

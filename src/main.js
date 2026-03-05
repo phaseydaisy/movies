@@ -15,6 +15,7 @@ const state = {
 };
 
 const AUTH_SESSION_KEY = "cinenest:session";
+const RESUME_STORAGE_KEY = "cinenest:playback-progress";
 
 const elements = {
   heroBackdrop: document.getElementById("heroBackdrop"),
@@ -51,6 +52,8 @@ const elements = {
   navMovies: document.getElementById("navMovies"),
   navTv: document.getElementById("navTv"),
   navList: document.getElementById("navList"),
+  continueSection: document.getElementById("continueSection"),
+  continueRow: document.getElementById("continueRow"),
   moviesSection: document.getElementById("moviesSection"),
   tvSection: document.getElementById("tvSection"),
   myListModal: document.getElementById("myListModal"),
@@ -138,6 +141,7 @@ function wireAuth() {
     if (elements.accountDropdown) elements.accountDropdown.classList.add("hidden");
     setAuthSession(null);
     state.history = [];
+    renderContinueWatching();
     syncAuthUi();
     toast("Signed out");
   });
@@ -191,6 +195,46 @@ function getSessionEmail() {
   return String(state.session?.email || "").trim().toLowerCase();
 }
 
+function readProgressMap() {
+  try {
+    return JSON.parse(localStorage.getItem(RESUME_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function getProgressKeyForEntry(entry) {
+  const source = String(entry?.source || "tmdb");
+  const type = String(entry?.type || "movie");
+  const id = String(entry?.id || "");
+
+  if (!id) return "";
+  if (type !== "tv") return `${source}:${type}:${id}`;
+
+  const season = Number(entry?.season || 0);
+  const episode = Number(entry?.episode || 0);
+  if (season > 0 && episode > 0) {
+    return `${source}:${type}:${id}:s${season}:e${episode}`;
+  }
+
+  return `${source}:${type}:${id}`;
+}
+
+function buildWatchHref(entry) {
+  const source = entry.source || "tmdb";
+  const base = `pages/watch.html?id=${entry.id}&type=${entry.type}&source=${source}`;
+
+  if (entry.type !== "tv") return base;
+
+  const season = Number(entry?.season || 0);
+  const episode = Number(entry?.episode || 0);
+  if (season > 0 && episode > 0) {
+    return `${base}&season=${season}&episode=${episode}`;
+  }
+
+  return base;
+}
+
 function formatHistoryTime(value) {
   const date = new Date(Number(value || 0));
   if (Number.isNaN(date.getTime())) return "Recently watched";
@@ -219,10 +263,12 @@ async function loadWatchHistory() {
   const data = await callAuthApi("/history/list", { email }).catch((error) => ({ ok: false, message: error.message }));
   if (!data.ok) {
     state.history = [];
+    renderContinueWatching();
     return [];
   }
 
   state.history = Array.isArray(data.history) ? data.history : [];
+  renderContinueWatching();
   return state.history;
 }
 
@@ -257,15 +303,69 @@ function renderMyList() {
         <div class="history-card-foot">
           <span><i class="fa-solid fa-star text-yellow-400"></i> ${rating ? rating.toFixed(1) : "N/A"}</span>
           <span>${year}</span>
-          <span class="history-card-open">Open details</span>
+          <span class="history-card-open">Resume</span>
         </div>
       </div>
     `;
     card.addEventListener("click", () => {
       elements.myListModal.classList.add("hidden");
-      openDetail(entry.id, entry.type, entry.source || "tmdb");
+      location.href = buildWatchHref(entry);
     });
     elements.myListResults.append(card);
+  });
+}
+
+function renderContinueWatching() {
+  if (!elements.continueSection || !elements.continueRow) return;
+
+  const progressMap = readProgressMap();
+  const items = state.history
+    .map((entry) => {
+      const key = getProgressKeyForEntry(entry);
+      return {
+        entry,
+        progressSeconds: Number(progressMap[key] || 0),
+      };
+    })
+    .filter((item) => item.progressSeconds > 0)
+    .slice(0, 20);
+
+  elements.continueRow.innerHTML = "";
+
+  if (!items.length) {
+    elements.continueSection.classList.add("hidden");
+    return;
+  }
+
+  elements.continueSection.classList.remove("hidden");
+
+  items.forEach(({ entry, progressSeconds }) => {
+    const card = document.createElement("article");
+    card.className = "media-card";
+    card.innerHTML = `
+      <img class="media-poster" src="${poster(entry.poster_path)}" alt="${entry.title || "Untitled"}" />
+      <div class="media-content">
+        <h4 class="media-title">${entry.title || "Untitled"}</h4>
+        <div class="media-meta">
+          <span>${formatHistoryType(entry)}</span>
+          <span>${Math.floor(progressSeconds / 60)}m watched</span>
+        </div>
+        <div class="media-actions">
+          <button class="btn-play" data-action="resume">Resume</button>
+          <button class="btn-info" data-action="info">Info</button>
+        </div>
+      </div>
+    `;
+
+    card.querySelector('[data-action="resume"]').addEventListener("click", () => {
+      location.href = buildWatchHref(entry);
+    });
+
+    card.querySelector('[data-action="info"]').addEventListener("click", () => {
+      openDetail(entry.id, entry.type, entry.source || "tmdb");
+    });
+
+    elements.continueRow.append(card);
   });
 }
 
@@ -579,6 +679,7 @@ async function init() {
     wireDetailClose();
     wireComingSoon();
     await Promise.all([loadHero(), loadRows()]);
+    await loadWatchHistory();
   } catch (error) {
     toast(error.message || "Failed to initialize app");
     console.error(error);
