@@ -44,7 +44,6 @@ const elements = {
   trailerWrap: document.getElementById("trailerWrap"),
   trailerBtn: document.getElementById("trailerBtn"),
   watchBtn: document.getElementById("watchBtn"),
-  addListBtn: document.getElementById("addListBtn"),
   toast: document.getElementById("toast"),
   navHome: document.getElementById("navHome"),
   navMovies: document.getElementById("navMovies"),
@@ -181,6 +180,18 @@ function formatHistoryTime(value) {
   return `Watched ${date.toLocaleString()}`;
 }
 
+function formatHistoryType(entry) {
+  const type = String(entry?.type || "movie").toUpperCase();
+  if (entry?.type !== "tv") return type;
+
+  const season = Number(entry?.season || 0);
+  const episode = Number(entry?.episode || 0);
+  if (season > 0 && episode > 0) {
+    return `${type} • S${season}:E${episode}`;
+  }
+  return type;
+}
+
 async function loadWatchHistory() {
   const email = getSessionEmail();
   if (!email) {
@@ -203,28 +214,39 @@ function renderMyList() {
   elements.myListResults.innerHTML = "";
 
   if (!getSessionEmail()) {
-    elements.myListResults.innerHTML = '<p class="col-span-full text-gray-400">Sign in to see your watch history.</p>';
+    elements.myListResults.innerHTML = '<p class="text-gray-400">Sign in to see your watch history.</p>';
     return;
   }
 
   if (!list.length) {
-    elements.myListResults.innerHTML = '<p class="col-span-full text-gray-400">No watch history yet. Start watching and titles will appear here.</p>';
+    elements.myListResults.innerHTML = '<p class="text-gray-400">No watch history yet. Start watching and titles will appear here automatically.</p>';
     return;
   }
 
   list.forEach((entry) => {
     const card = document.createElement("button");
-    card.className = "search-card text-left self-start";
+    card.className = "history-card";
+    const title = entry.title || "Untitled";
+    const rating = Number(entry.vote_average || 0);
+    const year = formatYear(entry);
     card.innerHTML = `
-      <img src="${poster(entry.poster_path)}" alt="${entry.title}" />
-      <div class="text">
-        <p class="font-semibold line-clamp-2">${entry.title}</p>
-        <p class="text-xs text-gray-400 mt-1">${entry.type.toUpperCase()} • ${formatHistoryTime(entry.watchedAt)}</p>
+      <img class="history-card-poster" src="${poster(entry.poster_path)}" alt="${title}" />
+      <div class="history-card-body">
+        <div class="history-card-top">
+          <p class="history-card-title line-clamp-1">${title}</p>
+          <span class="history-card-type">${formatHistoryType(entry)}</span>
+        </div>
+        <p class="history-card-meta">${formatHistoryTime(entry.watchedAt)}</p>
+        <div class="history-card-foot">
+          <span><i class="fa-solid fa-star text-yellow-400"></i> ${rating ? rating.toFixed(1) : "N/A"}</span>
+          <span>${year}</span>
+          <span class="history-card-open">Open details</span>
+        </div>
       </div>
     `;
     card.addEventListener("click", () => {
       elements.myListModal.classList.add("hidden");
-      openDetail(entry.id, entry.type, entry.source);
+      openDetail(entry.id, entry.type, entry.source || "tmdb");
     });
     elements.myListResults.append(card);
   });
@@ -361,12 +383,6 @@ async function openDetail(id, type = "movie", source = "tmdb") {
   elements.watchBtn.onclick = () => {
     location.href = `pages/watch.html?id=${id}&type=${type}&source=${source}`;
   };
-
-  elements.addListBtn.textContent = getSessionEmail()
-    ? "Saved to history when watched"
-    : "Sign in to save watch history";
-  elements.addListBtn.disabled = true;
-  elements.addListBtn.classList.add("opacity-70", "cursor-not-allowed");
 
   elements.trailerBtn.onclick = async () => {
     let key;

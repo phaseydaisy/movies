@@ -550,6 +550,84 @@ main aside {
   padding: 0.68rem;
 }
 
+.history-card {
+  inline-size: 100%;
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(22, 25, 37, 0.95), rgba(12, 14, 22, 0.95));
+  padding: 0.68rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: start;
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(109, 139, 255, 0.52);
+  box-shadow: 0 14px 28px rgba(7, 9, 18, 0.48);
+}
+
+.history-card-poster {
+  inline-size: 84px;
+  block-size: 112px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--line-soft);
+  background: #1a1d28;
+}
+
+.history-card-body {
+  min-inline-size: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.history-card-top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.history-card-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.history-card-type {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.16rem 0.48rem;
+  font-size: 0.68rem;
+  color: #cfd7ef;
+  white-space: nowrap;
+}
+
+.history-card-meta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #aeb8d6;
+}
+
+.history-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  color: #c9d2eb;
+  font-size: 0.78rem;
+}
+
+.history-card-open {
+  margin-inline-start: auto;
+  color: #f3f6ff;
+  text-decoration: underline;
+}
+
 .filter-btn {
   padding: 0.4rem 0.82rem;
   border-radius: 9999px;

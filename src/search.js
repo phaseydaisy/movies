@@ -14,6 +14,7 @@ const state = {
 
 const elements = {
   backHome: document.getElementById("backHome"),
+  searchCloseX: document.getElementById("searchCloseX"),
   searchInput: document.getElementById("searchInput"),
   searchBtn: document.getElementById("searchBtn"),
   searchQueryDisplay: document.getElementById("searchQueryDisplay"),
@@ -36,6 +37,10 @@ function closeSearchView() {
     window.parent.postMessage({ type: "cinenest-close-search-overlay" }, "*");
     return;
   }
+  location.href = "../index.html";
+}
+
+function goHomeInsideEmbed() {
   location.href = "../index.html";
 }
 
@@ -67,7 +72,7 @@ function updateUrl() {
 
 function updateQueryUI() {
   const q = state.query.trim();
-  const shown = q || "trending";
+  const shown = q || "—";
   elements.searchQueryDisplay.textContent = `Query: ${shown}`;
   elements.searchFloatingQuery.textContent = `Results for \"${shown}\"`;
   elements.searchInput.value = state.query;
@@ -85,6 +90,14 @@ async function runSearch() {
   updateUrl();
 
   const hasQuery = !!state.query.trim();
+  if (!hasQuery) {
+    state.totalPages = 1;
+    elements.searchResults.innerHTML = '<p class="col-span-full text-gray-400">Type a query and press Enter (or click Search).</p>';
+    elements.resultCount.textContent = "0 results • Page 1 of 1";
+    syncPager();
+    return;
+  }
+
   let results = [];
 
   if (state.mode === "local") {
@@ -93,16 +106,10 @@ async function runSearch() {
     state.totalPages = data.total_pages || 1;
   } else {
     try {
-      if (!hasQuery) {
-        const browse = await getJson(`/trending/all/week?page=${state.page}`);
-        results = (browse.results || []).filter((item) => item.media_type === "movie" || item.media_type === "tv");
-        state.totalPages = browse.total_pages || 1;
-      } else {
-        const query = encodeURIComponent(state.query.trim());
-        const res = await getJson(`/search/${state.filter}?query=${query}&page=${state.page}&include_adult=false`);
-        results = (res.results || []).filter((item) => (state.filter === "multi" ? item.media_type !== "person" || item.profile_path : true));
-        state.totalPages = res.total_pages || 1;
-      }
+      const query = encodeURIComponent(state.query.trim());
+      const res = await getJson(`/search/${state.filter}?query=${query}&page=${state.page}&include_adult=false`);
+      results = (res.results || []).filter((item) => (state.filter === "multi" ? item.media_type !== "person" || item.profile_path : true));
+      state.totalPages = res.total_pages || 1;
     } catch {
       const fallback = searchLocal(state.query, state.filter, state.page);
       results = fallback.results || [];
@@ -157,6 +164,12 @@ function wire() {
     elements.backHome.classList.add("hidden");
   }
 
+  if (elements.searchCloseX) {
+    elements.searchCloseX.addEventListener("click", () => {
+      goHomeInsideEmbed();
+    });
+  }
+
   elements.backHome.addEventListener("click", () => {
     closeSearchView();
   });
@@ -172,15 +185,6 @@ function wire() {
     state.query = elements.searchInput.value;
     state.page = 1;
     await runSearch();
-  });
-
-  elements.searchInput.addEventListener("input", () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
-      state.query = elements.searchInput.value;
-      state.page = 1;
-      await runSearch();
-    }, 250);
   });
 
   document.querySelectorAll(".filter-btn").forEach((button) => {
