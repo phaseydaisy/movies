@@ -272,7 +272,7 @@ function addResumeParams(url, startSeconds = 0) {
 
 function renderPlayerFromUrl(url, startSeconds = 0) {
   const resumedUrl = addResumeParams(url, startSeconds);
-  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>`;
+  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>`;
   startProgressTracking(startSeconds);
   pendingResumeSec = null;
   schedulePlayerOverlayReveal();
@@ -584,16 +584,12 @@ async function init() {
     if (preferred) {
       activeServerKey = preferred.key;
       setActiveServerButton(preferred.key);
-      if (preferred.type === "embed") {
-        playEmbedServer(preferred);
-      } else {
-        playTrailerServer();
-      }
+      playActiveServer();
     }
   } else {
     activeServerKey = "trailer";
     setActiveServerButton("trailer");
-    playTrailerServer();
+    playActiveServer();
   }
 
   if (detailsBtn) {

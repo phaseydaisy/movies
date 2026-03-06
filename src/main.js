@@ -702,6 +702,31 @@ function wireGlobalShortcuts() {
   });
 }
 
+function wireHistoryRefresh() {
+  const refresh = () => {
+    if (!getSessionEmail()) {
+      state.history = [];
+      renderContinueWatching();
+      return;
+    }
+    loadWatchHistory().catch(() => {});
+  };
+
+  window.addEventListener("pageshow", () => {
+    refresh();
+  });
+
+  window.addEventListener("focus", () => {
+    refresh();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refresh();
+    }
+  });
+}
+
 async function init() {
   try {
     wireSearch();
@@ -711,6 +736,7 @@ async function init() {
     wireHeroControls();
     wireNav();
     wireGlobalShortcuts();
+    wireHistoryRefresh();
     wireComingSoon();
     await Promise.all([loadHero(), loadRows()]);
     await loadWatchHistory();
