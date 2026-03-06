@@ -2,7 +2,7 @@ export const WATCH_SERVERS = [
   { key: "trailer", label: "Trailer", type: "trailer" },
   {
     key: "licensed-2",
-    label: "videasy (recommended)",
+    label: "videasy",
     type: "embed",
     buildUrl: (contentId, mediaType, opts = {}) => {
       if (mediaType === "tv") {
@@ -15,7 +15,7 @@ export const WATCH_SERVERS = [
   },
   {
     key: "autoembed",
-    label: "Autoembed (Not working)",
+    label: "Autoembed (working but ads)",
     type: "embed",
     buildUrl: (contentId, mediaType, opts = {}) => {
       if (mediaType === "tv") {

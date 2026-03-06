@@ -44,6 +44,7 @@ let lastHistorySyncAtMs = 0;
 const SERVERS = WATCH_SERVERS;
 const RESUME_STORAGE_KEY = "movies:playback-progress";
 const AUTH_SESSION_KEY = "movies:session";
+const BLOCKED_POPUP_SERVER_KEYS = new Set(["licensed-2"]);
 
 function getApiBase() {
   return String(AUTH_API_BASE_URL || "").trim().replace(/\/$/, "");
@@ -270,9 +271,11 @@ function addResumeParams(url, startSeconds = 0) {
   }
 }
 
-function renderPlayerFromUrl(url, startSeconds = 0) {
+function renderPlayerFromUrl(url, startSeconds = 0, options = {}) {
+  const useSandbox = options.useSandbox !== false;
   const resumedUrl = addResumeParams(url, startSeconds);
-  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"></iframe>`;
+  const sandboxAttr = useSandbox ? ' sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"' : "";
+  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"${sandboxAttr}></iframe>`;
   startProgressTracking(startSeconds);
   pendingResumeSec = null;
   schedulePlayerOverlayReveal();
@@ -373,7 +376,7 @@ function playTrailerServer() {
     return;
   }
   const resumeAt = getResumeStartSeconds();
-  renderPlayerFromUrl(`https://www.youtube.com/embed/${currentTrailerKey}?autoplay=1&mute=1`, resumeAt);
+  renderPlayerFromUrl(`https://www.youtube.com/embed/${currentTrailerKey}?autoplay=1&mute=1`, resumeAt, { useSandbox: false });
 }
 
 function playEmbedServer(server) {
@@ -382,14 +385,18 @@ function playEmbedServer(server) {
     renderMessage("No compatible embed content ID found for this title.");
     return;
   }
+  if (BLOCKED_POPUP_SERVER_KEYS.has(server.key)) {
+    renderMessage("This server is disabled in-app to block ad popups and redirects. Use a different server.");
+    return;
+  }
   const mediaType = type === "tv" ? "tv" : "movie";
   const baseUrl = server.buildUrl(embedId, mediaType, { season: currentSeason, episode: currentEpisode });
   const resumeAt = getResumeStartSeconds();
-  renderPlayerFromUrl(addEpisodeParams(baseUrl), resumeAt);
+  renderPlayerFromUrl(addEpisodeParams(baseUrl), resumeAt, { useSandbox: true });
 }
 
 function getDefaultEmbedServer() {
-  return SERVERS.find((entry) => entry.key === "licensed-2") || SERVERS.find((entry) => entry.type === "embed") || null;
+  return SERVERS.find((entry) => entry.type === "embed" && !BLOCKED_POPUP_SERVER_KEYS.has(entry.key)) || null;
 }
 
 function playActiveServer() {
@@ -422,6 +429,10 @@ function mountServerButtons() {
   serverList.innerHTML = "";
 
   SERVERS.forEach((server) => {
+    if (BLOCKED_POPUP_SERVER_KEYS.has(server.key)) {
+      return;
+    }
+
     const button = document.createElement("button");
     button.dataset.server = server.key;
     button.className = "px-3 py-2 rounded border border-zinc-600 bg-zinc-800 text-sm font-medium hover:bg-zinc-700 transition-colors";
@@ -442,7 +453,7 @@ function mountServerButtons() {
   });
 
   serverHint.textContent = canUseEmbedServers()
-    ? "Switch if the current source is unavailable."
+    ? "Switch if the current source is unavailable. Popup-ad servers are hidden."
     : "Some titles may not have a compatible embed ID; trailer server is always available.";
 }
 
