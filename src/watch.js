@@ -272,7 +272,7 @@ function addResumeParams(url, startSeconds = 0) {
 
 function renderPlayerFromUrl(url, startSeconds = 0) {
   const resumedUrl = addResumeParams(url, startSeconds);
-  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>`;
+  playerContent.innerHTML = `<iframe class="w-full h-full" src="${resumedUrl}" allow="fullscreen *; autoplay *; encrypted-media *; picture-in-picture *" allowfullscreen webkitallowfullscreen mozallowfullscreen referrerpolicy="no-referrer"></iframe>`;
   startProgressTracking(startSeconds);
   pendingResumeSec = null;
   schedulePlayerOverlayReveal();
